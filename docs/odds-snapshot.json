@@ -1,6 +1,292 @@
 {
-  "generatedAt": null,
+  "generatedAt": "2026-10-26T17:48:48Z",
   "entries": [
-    { "label": "Example: Chiefs game", "error": "Not refreshed yet — run the \"Update Odds\" workflow in the Actions tab." }
+    {
+      "label": "Example: Chiefs game",
+      "game": "Kansas City Chiefs @ Denver Broncos",
+      "start": "2026-11-01T21:25:00Z",
+      "odds": [
+        {
+          "sportsbook": "DraftKings",
+          "market": "Correct Score",
+          "selection": "Denver Broncos",
+          "price": 17000,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Correct Score",
+          "selection": "Kansas City Chiefs",
+          "price": 15000,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Correct Score",
+          "selection": "Denver Broncos",
+          "price": 17000,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Correct Score",
+          "selection": "Kansas City Chiefs",
+          "price": 18000,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Correct Score",
+          "selection": "Kansas City Chiefs",
+          "price": 15000,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "1st Half Correct Score",
+          "selection": "Denver Broncos",
+          "price": 4500,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "1st Half Correct Score",
+          "selection": "Draw",
+          "price": 5000,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Point Spread",
+          "selection": "Denver Broncos",
+          "price": -110,
+          "points": 1.5
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Correct Score",
+          "selection": "Kansas City Chiefs",
+          "price": 18000,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "1st Quarter Correct Score",
+          "selection": "Kansas City Chiefs",
+          "price": 16000,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Correct Score",
+          "selection": "Kansas City Chiefs",
+          "price": 17000,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Correct Score",
+          "selection": "Kansas City Chiefs",
+          "price": 16000,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Correct Score",
+          "selection": "Kansas City Chiefs",
+          "price": 18000,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "1st Half Correct Score",
+          "selection": "Denver Broncos",
+          "price": 5500,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "1st Quarter Correct Score",
+          "selection": "Kansas City Chiefs",
+          "price": 16000,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Both Teams Total Points",
+          "selection": "",
+          "price": 114,
+          "points": 14.5
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Correct Score",
+          "selection": "Denver Broncos",
+          "price": 17000,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "1st Quarter Correct Score",
+          "selection": "Denver Broncos",
+          "price": 1300,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "1st Half Correct Score",
+          "selection": "Kansas City Chiefs",
+          "price": 3000,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Correct Score",
+          "selection": "Kansas City Chiefs",
+          "price": 16000,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Correct Score",
+          "selection": "Kansas City Chiefs",
+          "price": 13000,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "1st Half Correct Score",
+          "selection": "Kansas City Chiefs",
+          "price": 8000,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Correct Score",
+          "selection": "Denver Broncos",
+          "price": 15000,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Correct Score",
+          "selection": "Denver Broncos",
+          "price": 19000,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "1st Half Total Points",
+          "selection": "",
+          "price": -122,
+          "points": 20.5
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Correct Score",
+          "selection": "Denver Broncos",
+          "price": 15000,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Correct Score",
+          "selection": "Kansas City Chiefs",
+          "price": 15000,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Correct Score",
+          "selection": "Kansas City Chiefs",
+          "price": 13000,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "1st Quarter Moneyline 3-Way",
+          "selection": "Draw",
+          "price": 320,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Correct Score",
+          "selection": "Kansas City Chiefs",
+          "price": 18000,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "1st Quarter Total Touchdowns",
+          "selection": "",
+          "price": -195,
+          "points": 0.5
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "1st Half Correct Score",
+          "selection": "Kansas City Chiefs",
+          "price": 6000,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "1st Quarter Correct Score",
+          "selection": "Kansas City Chiefs",
+          "price": 5500,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Correct Score",
+          "selection": "Denver Broncos",
+          "price": 19000,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Correct Score",
+          "selection": "Kansas City Chiefs",
+          "price": 15000,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Correct Score",
+          "selection": "Kansas City Chiefs",
+          "price": 15000,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Correct Score",
+          "selection": "Kansas City Chiefs",
+          "price": 18000,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "1st Half Correct Score",
+          "selection": "Kansas City Chiefs",
+          "price": 5000,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Last Team To Score",
+          "selection": "Denver Broncos",
+          "price": -110,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "1st Half Correct Score",
+          "selection": "Kansas City Chiefs",
+          "price": 9000,
+          "points": null
+        }
+      ]
+    }
   ]
 }
