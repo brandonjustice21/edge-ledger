@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
-# One-off reconnaissance script (not part of the production pipeline): finds today's
-# games across sports and lists the actual market names OddsJam/OpticOdds returns for
-# one sample game each, so we can see whether player-prop markets are posted yet.
+# One-off reconnaissance script (not part of the production pipeline): for each sport,
+# shows the next several upcoming fixtures (no date filter — a previous version used
+# start_date_after/start_date_before and got zero results for every single sport
+# including soccer, which plays somewhere every day, so that param combo is almost
+# certainly wrong rather than there being no games) and lists the real market names
+# available for the nearest one, so we can see what's actually posted right now.
 set -uo pipefail
 
 API_BASE="https://api.opticodds.com/api/v3"
@@ -14,12 +17,11 @@ fi
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 
-today_start=$(date -u +%Y-%m-%dT00:00:00Z)
-today_end=$(date -u -d "+1 day" +%Y-%m-%dT00:00:00Z 2>/dev/null || date -u -v+1d +%Y-%m-%dT00:00:00Z)
-echo "Today's UTC window: $today_start to $today_end"
+now_iso=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+today_date=$(date -u +%Y-%m-%d)
+echo "Now (UTC): $now_iso"
 echo
 
-# label: "opticodds_sport opticodds_league(or - for none)"
 SPORTS=(
   "NFL:football:nfl"
   "NCAAF:football:ncaaf"
@@ -32,21 +34,31 @@ SPORTS=(
 
 for row in "${SPORTS[@]}"; do
   IFS=":" read -r label sp lg <<< "$row"
-  url="$API_BASE/fixtures/active?page=1&sport=$sp&start_date_after=$today_start&start_date_before=$today_end"
+  url="$API_BASE/fixtures/active?page=1&sport=$sp"
   [ "$lg" != "-" ] && url="$url&league=$lg"
 
   curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$url" > "$TMP/fx.json" 2>/dev/null || echo '{}' > "$TMP/fx.json"
   count=$(jq -r '(.data // []) | length' "$TMP/fx.json" 2>/dev/null || echo 0)
-  echo "=== $label: $count game(s) today ==="
-  if [ "$count" != "0" ]; then
-    jq -c '(.data // [])[] | {id, away: .away_team_display, home: .home_team_display, start: .start_date}' "$TMP/fx.json" 2>/dev/null
-    fid=$(jq -r '(.data // [])[0].id' "$TMP/fx.json")
+  echo "=== $label: $count fixture(s) on page 1 (no date filter) ==="
+  jq -c '[(.data // [])[] | {id, away: .away_team_display, home: .home_team_display, start: .start_date}][0:5]' "$TMP/fx.json" 2>/dev/null
+
+  # Pick whichever fixture (if any) starts today in UTC; otherwise fall back to the
+  # first one returned, just to see the market-name conventions for this sport.
+  fid=$(jq -r --arg d "$today_date" '
+    (.data // []) | map(select((.start_date // "") | startswith($d))) | .[0].id // (.data[0].id // empty)
+  ' "$TMP/fx.json" 2>/dev/null)
+  is_today=$(jq -r --arg d "$today_date" '
+    (.data // []) | map(select((.start_date // "") | startswith($d))) | length > 0
+  ' "$TMP/fx.json" 2>/dev/null)
+
+  if [ -n "$fid" ] && [ "$fid" != "null" ]; then
+    echo "--- checking markets for fixture $fid (starts today: $is_today) ---"
     curl -sS -G -H "X-Api-Key: $ODDSJAM_API_KEY" \
       --data-urlencode "fixture_id=$fid" \
       --data-urlencode "sportsbook=DraftKings" \
       "$API_BASE/fixtures/odds" > "$TMP/odds.json" 2>/dev/null || echo '{}' > "$TMP/odds.json"
     odds_count=$(jq -r '[(.data // [])[] | (.odds // [])[]] | length' "$TMP/odds.json" 2>/dev/null || echo 0)
-    echo "--- sample game $fid: $odds_count odds lines at DraftKings; distinct markets: ---"
+    echo "    $odds_count odds lines at DraftKings; distinct markets:"
     jq -c '[(.data // [])[] | (.odds // [])[] | .market] | unique' "$TMP/odds.json" 2>/dev/null
   fi
   echo
