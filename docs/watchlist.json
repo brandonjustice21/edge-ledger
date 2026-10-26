@@ -10,7 +10,7 @@
     "line": "6.5",
     "placedBook": "DraftKings",
     "placedOdds": 150,
-    "sharpBooks": ["DraftKings", "FanDuel", "Novig", "Kalshi", "Pinnacle", "Circa"]
+    "sharpBooks": ["DraftKings", "FanDuel", "Novig", "Kalshi", "Pinnacle", "Circa Sports"]
   },
   {
     "label": "Mahomes Passing Yards Over 275.5 (FanDuel @ -110)",
@@ -22,7 +22,7 @@
     "line": "275.5",
     "placedBook": "FanDuel",
     "placedOdds": -110,
-    "sharpBooks": ["DraftKings", "FanDuel", "Novig", "Kalshi", "Pinnacle", "Circa"]
+    "sharpBooks": ["DraftKings", "FanDuel", "Novig", "Kalshi", "Pinnacle", "Circa Sports"]
   },
   {
     "label": "Hurts Passing Yards Over 215.5 (DraftKings) - tonight's game",
@@ -34,6 +34,6 @@
     "line": "215.5",
     "placedBook": "DraftKings",
     "placedOdds": -115,
-    "sharpBooks": ["DraftKings", "FanDuel", "Novig", "Kalshi", "Pinnacle", "Circa"]
+    "sharpBooks": ["DraftKings", "FanDuel", "Novig", "Kalshi", "Pinnacle", "Circa Sports"]
   }
 ]

@@ -1030,7 +1030,7 @@ function parseBetPaste(raw){
   var lines = text.split("\n").map(function(l){return l.trim();}).filter(Boolean);
   var out = {};
 
-  var books = ["DraftKings","FanDuel","BetMGM","Caesars","ESPN BET","Fanatics","bet365","PointsBet","BetRivers","Hard Rock Bet","Novig","Kalshi","Pinnacle","Circa"];
+  var books = ["DraftKings","FanDuel","BetMGM","Caesars","ESPN BET","Fanatics","bet365","PointsBet","BetRivers","Hard Rock Bet","Novig","Kalshi","Pinnacle","Circa Sports","Circa"];
   for(var i=0;i<books.length;i++){
     if(text.toLowerCase().indexOf(books[i].toLowerCase())!==-1){ out.book = books[i]; break; }
   }
@@ -1095,7 +1095,7 @@ function parseBetPaste(raw){
 }
 
 /* ---------- player-prop shorthand, e.g. "brunson assists over 6.5 at draftkings +150" ---------- */
-var SHARP_BOOKS = ["DraftKings","FanDuel","Novig","Kalshi","Pinnacle","Circa"];
+var SHARP_BOOKS = ["DraftKings","FanDuel","Novig","Kalshi","Pinnacle","Circa Sports"];
 var STAT_KEYWORDS = [
   [/\bpoints?\s*\+\s*rebounds?\s*\+\s*assists?\b|\bpra\b/i, "Points + Rebounds + Assists", null],
   [/\bpoints?\s*\+\s*rebounds?\b|\bpr\b(?!\w)/i, "Points + Rebounds", null],
