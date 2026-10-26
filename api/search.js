@@ -128,12 +128,25 @@ module.exports = async function handler(req, res) {
 
     const kwPattern = market ? (MARKET_KEYWORDS[market] || new RegExp(market.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i")) : null;
     const nameKw = pname.split(" ").pop().toLowerCase();
+    // Real market names follow a "Player <Stat>" convention for the full-game line
+    // (e.g. "Player Passing Yards"), with period/combo/alternate variants layered on
+    // top ("1st Half Player Passing Yards", "Player Passing Yards (Combo)", "...H2H
+    // Spread", etc.) that also match the plain keyword search. Prefer an exact match on
+    // the full-game market name so a simple prop search doesn't surface a wall of those
+    // variants; fall back to the broader keyword match only if nothing hit exactly.
+    const exactMarket = market ? ("player " + market).toLowerCase() : null;
+
+    function nameOk(o) { return (o.selection || "").toLowerCase().indexOf(nameKw) !== -1; }
 
     let matched = allOdds.filter(function (o) {
-      const marketOk = !kwPattern || kwPattern.test(o.market || "");
-      const nameOk = (o.selection || "").toLowerCase().indexOf(nameKw) !== -1;
-      return marketOk && nameOk;
+      return exactMarket && (o.market || "").toLowerCase() === exactMarket && nameOk(o);
     });
+    if (!matched.length) {
+      matched = allOdds.filter(function (o) {
+        const marketOk = !kwPattern || kwPattern.test(o.market || "");
+        return marketOk && nameOk(o);
+      });
+    }
     matched = matched
       .map(function (o) {
         return {
