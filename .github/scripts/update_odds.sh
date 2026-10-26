@@ -193,17 +193,25 @@ process_player_prop_entry() {
   done
 
   if [ -z "$pid" ]; then
-    # Write to a file first, never pipe curl straight into head/grep — under `set -o
-    # pipefail` that pipeline can make curl exit 23 ("write error", a broken-pipe from
-    # the consumer closing early) and abort the whole script, which is exactly what
-    # broke this on the previous run.
-    echo "  [debug] still no match — searching /leagues?sport=$op_sport for anything named like \"$op_league\":" >&2
-    curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/leagues?sport=$op_sport" > "$TMP/leagues.json" 2>/dev/null || echo '{}' > "$TMP/leagues.json"
-    # This is diagnostic-only, so let everything (including a jq error) reach the log
-    # rather than suppressing stderr — a previous version suppressed it with the fds in
-    # the wrong order (2>/dev/null >&2), which silenced the output entirely.
-    jq -c --arg kw "$sport" '(.data // []) | map(select((.id // "" | test($kw; "i")) or (.name // "" | test($kw; "i")))) | .[0:10]' "$TMP/leagues.json" >&2 || true
-    echo "  [debug] matches shown above (empty [] means none of the $(jq -r '(.data // []) | length' "$TMP/leagues.json" 2>/dev/null) league names/ids contain \"$sport\")" >&2
+    # /leagues confirmed "nba" (lowercase) IS the real, valid league id — so the league
+    # value itself isn't the problem; something else about how /players wants it called
+    # is. Try a few parameter shapes side by side and log how many players each returns,
+    # so whichever one actually works is obvious instead of another single blind guess.
+    echo "  [debug] still no match with league=$op_league. Probing alternate /players parameter shapes:" >&2
+    curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/players?sport=$op_sport&page=1" > "$TMP/probe1.json" 2>/dev/null || echo '{}' > "$TMP/probe1.json"
+    echo "  [debug] sport=$op_sport only -> $(jq -r '(.data // []) | length' "$TMP/probe1.json" 2>/dev/null || echo '?') players" >&2
+    curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/players?sport=$op_sport&league=$op_league&page=1" > "$TMP/probe2.json" 2>/dev/null || echo '{}' > "$TMP/probe2.json"
+    echo "  [debug] sport=$op_sport + league=$op_league -> $(jq -r '(.data // []) | length' "$TMP/probe2.json" 2>/dev/null || echo '?') players" >&2
+    curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/players?league=355&page=1" > "$TMP/probe3.json" 2>/dev/null || echo '{}' > "$TMP/probe3.json"
+    echo "  [debug] league=355 (nba's numerical_id) -> $(jq -r '(.data // []) | length' "$TMP/probe3.json" 2>/dev/null || echo '?') players" >&2
+    curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/players?league=NBA&page=1" > "$TMP/probe4.json" 2>/dev/null || echo '{}' > "$TMP/probe4.json"
+    echo "  [debug] league=NBA (name, re-confirming) -> $(jq -r '(.data // []) | length' "$TMP/probe4.json" 2>/dev/null || echo '?') players" >&2
+    for f in probe1 probe2 probe3 probe4; do
+      n=$(jq -r '(.data // []) | length' "$TMP/$f.json" 2>/dev/null || echo 0)
+      if [ "$n" != "0" ] && [ "$n" != "?" ]; then
+        echo "  [debug] >>> $f worked! sample: $(jq -c '(.data // [])[0] | {id,name}' "$TMP/$f.json" 2>/dev/null)" >&2
+      fi
+    done
   fi
 
   if [ -z "$pid" ]; then
