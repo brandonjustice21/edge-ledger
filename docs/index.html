@@ -387,7 +387,7 @@ footer{margin-top:40px; padding-top:16px; border-top:1px solid var(--border); fo
   </div>
 
   <footer>
-    EV is estimated from closing-line value: once a closing price is known, your price at wager is compared against it to estimate fair edge before the result is known — the standard way sharp bettors measure skill independent of variance. Type a bet into "Paste a bet confirmation" (e.g. "brunson assists over 6.5 at draftkings +150") to track it automatically — the Update Odds GitHub Action checks sharp books (DraftKings, FanDuel, Novig, Kalshi, Pinnacle, Circa Sports) every 10 minutes, capturing an opening price, a live price that updates until kickoff, and a closing price once the line locks; CLV%/EV shown before kickoff (marked with ~) use the live price as a provisional stand-in. You set the outcome (won/lost/push/etc.) yourself once the bet settles. It assumes the closing line is single-sided fair value; enter opposing closing odds in Notes if you want to de-vig by hand. All ledger data stays in this browser only (nothing is sent anywhere) — use Export backup regularly, since clearing site data or switching browsers will lose it.
+    EV is estimated from closing-line value: once a closing price is known, your price at wager is compared against it to estimate fair edge before the result is known — the standard way sharp bettors measure skill independent of variance. Type a bet into "Paste a bet confirmation" (e.g. "brunson assists over 6.5 at draftkings +150") to track it automatically — the Update Odds GitHub Action checks sharp books (DraftKings, FanDuel, Novig, Kalshi, Pinnacle, Circa Sports) every 10 minutes, capturing an opening price, a live price that updates until kickoff, and a closing price once the line locks. On the live GitHub Pages URL this page syncs those prices in automatically every couple minutes; CLV%/EV shown before kickoff (marked with ~) use the live price as a provisional stand-in. You set the outcome (won/lost/push/etc.) yourself once the bet settles. It assumes the closing line is single-sided fair value; enter opposing closing odds in Notes if you want to de-vig by hand. All ledger data stays in this browser only (nothing is sent anywhere) — use Export backup regularly, since clearing site data or switching browsers will lose it.
   </footer>
 </div>
 
@@ -416,7 +416,7 @@ footer{margin-top:40px; padding-top:16px; border-top:1px solid var(--border); fo
       <div id="oddsArea" style="display:none; margin-top:8px;">
         <button type="button" class="btn primary sm" id="btnLoadSnapshotFile" style="width:100%; justify-content:center;">Load bets.json…</button>
         <input type="file" id="snapshotFile" accept="application/json" style="display:none">
-        <div id="oddsMeta" class="odds-loading" style="margin-top:8px;">Download bets.json from your GitHub repo (it's refreshed automatically every 10 min), then load it here to pull in opening/live/closing prices for any bet you're tracking.</div>
+        <div id="oddsMeta" class="odds-loading" style="margin-top:8px;">When this page is open on its live GitHub Pages URL, tracked bets sync automatically every couple minutes. Opened as a local file instead? Download bets.json from your GitHub repo and load it below.</div>
         <div id="oddsWatchlist"></div>
         <div id="oddsResults"></div>
       </div>
@@ -1643,6 +1643,18 @@ try{
   if(savedTheme) document.documentElement.setAttribute("data-theme", savedTheme);
 }catch(e){}
 
+/* ---------- live auto-sync: when served over https (e.g. GitHub Pages), bets.json is
+   fetchable, so pull it automatically on load and keep polling — the Action itself only
+   refreshes every ~10 min, so there's no need to poll faster than every couple minutes.
+   Silently does nothing when opened as a local file:// page (tryFetchBetsFile's fetch()
+   fails there, same as before); the manual "Sync tracked bets" button/file-picker still
+   works either way. */
+function scheduleAutoSync(){
+  tryFetchBetsFile();
+  setInterval(tryFetchBetsFile, 120000);
+}
+
 renderAll();
+scheduleAutoSync();
 })();
 </script>
