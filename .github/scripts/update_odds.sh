@@ -19,7 +19,7 @@ API_BASE="https://api.opticodds.com/api/v3"
 WATCHLIST="docs/watchlist.json"
 OUT="docs/odds-snapshot.json"
 MAX_ODDS_PER_GAME=40
-PLAYER_SEARCH_PAGES=8
+PLAYER_SEARCH_PAGES=50
 
 if [ -z "${ODDSJAM_API_KEY:-}" ]; then
   echo "ODDSJAM_API_KEY is not set — add it as a repository secret." >&2
