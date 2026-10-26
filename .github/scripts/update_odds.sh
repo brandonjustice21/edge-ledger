@@ -1,16 +1,26 @@
 #!/usr/bin/env bash
 # Fetches current odds for each entry in docs/watchlist.json from the OddsJam/OpticOdds
 # API and writes docs/odds-snapshot.json. Requires ODDSJAM_API_KEY in the environment.
+#
+# All API responses are piped through temp FILES, never shell arguments — a real game's
+# odds response can include hundreds of player-prop lines, and passing that much JSON as
+# a jq --argjson argument overflows the OS command-line length limit ("Argument list too
+# long"). --slurpfile reads from a file instead, so there's no such limit.
 set -euo pipefail
 
 API_BASE="https://api.opticodds.com/api/v3"
 WATCHLIST="docs/watchlist.json"
 OUT="docs/odds-snapshot.json"
+MAX_ODDS_PER_GAME=40
 
 if [ -z "${ODDSJAM_API_KEY:-}" ]; then
   echo "ODDSJAM_API_KEY is not set — add it as a repository secret." >&2
   exit 1
 fi
+
+TMP=$(mktemp -d)
+trap 'rm -rf "$TMP"' EXIT
+: > "$TMP/entries.jsonl"
 
 # sport name (as used in Edge Ledger) -> OpticOdds {sport, league}. Best-effort mapping;
 # adjust here if a sport keeps coming back with no matching games.
@@ -31,7 +41,6 @@ map_sport() {
 }
 
 count=$(jq 'length' "$WATCHLIST")
-results="[]"
 
 for i in $(seq 0 $((count - 1))); do
   entry=$(jq -c ".[$i]" "$WATCHLIST")
@@ -47,47 +56,50 @@ for i in $(seq 0 $((count - 1))); do
   [ "$op_league" != "-" ] && fixtures_url="$fixtures_url&league=$op_league"
 
   echo "Looking up fixtures for \"$label\" ($fixtures_url)..." >&2
-  fixtures_resp=$(curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$fixtures_url" || echo '{}')
+  curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$fixtures_url" > "$TMP/fixtures.json" || echo '{}' > "$TMP/fixtures.json"
 
-  fixture=$(echo "$fixtures_resp" | jq -c --arg team "$team" '
+  jq -c --arg team "$team" '
     (.data // [])
     | map(select(
         ((.home_team_display // "") | test($team; "i")) or
         ((.away_team_display // "") | test($team; "i"))
       ))
     | .[0] // empty
-  ' 2>/dev/null || echo "")
+  ' "$TMP/fixtures.json" > "$TMP/fixture.json" 2>/dev/null || echo "" > "$TMP/fixture.json"
 
-  if [ -z "$fixture" ] || [ "$fixture" = "null" ]; then
-    entry_result=$(jq -n --arg label "$label" \
+  fixture_content=$(cat "$TMP/fixture.json")
+
+  if [ -z "$fixture_content" ] || [ "$fixture_content" = "null" ]; then
+    jq -n --arg label "$label" \
       --arg error "No upcoming game matched \"$team\" for sport \"$sport\". Check spelling, or that watchlist.json's sport matches Edge Ledger's sport names exactly." \
-      '{label: $label, error: $error}')
-  else
-    fid=$(echo "$fixture" | jq -r '.id')
-    home=$(echo "$fixture" | jq -r '.home_team_display')
-    away=$(echo "$fixture" | jq -r '.away_team_display')
-    start=$(echo "$fixture" | jq -r '.start_date')
-
-    echo "Matched fixture $fid ($away @ $home). Fetching odds from $book..." >&2
-    odds_resp=$(curl -sS -G -H "X-Api-Key: $ODDSJAM_API_KEY" \
-      --data-urlencode "fixture_id=$fid" \
-      --data-urlencode "sportsbook=$book" \
-      "$API_BASE/fixtures/odds" || echo '{}')
-
-    odds=$(echo "$odds_resp" | jq -c '
-      [ (.data // [])[] | (.odds // [])[] | {sportsbook, market, selection, price, points, is_main} ]
-    ' 2>/dev/null || echo "[]")
-    [ -z "$odds" ] && odds="[]"
-
-    entry_result=$(jq -n --arg label "$label" --arg game "$away @ $home" --arg start "$start" --argjson odds "$odds" \
-      '{label: $label, game: $game, start: $start, odds: $odds}')
+      '{label: $label, error: $error}' >> "$TMP/entries.jsonl"
+    continue
   fi
 
-  results=$(echo "$results" | jq --argjson r "$entry_result" '. + [$r]')
+  fid=$(jq -r '.id' "$TMP/fixture.json")
+  home=$(jq -r '.home_team_display' "$TMP/fixture.json")
+  away=$(jq -r '.away_team_display' "$TMP/fixture.json")
+  start=$(jq -r '.start_date' "$TMP/fixture.json")
+
+  echo "Matched fixture $fid ($away @ $home). Fetching odds from $book..." >&2
+  curl -sS -G -H "X-Api-Key: $ODDSJAM_API_KEY" \
+    --data-urlencode "fixture_id=$fid" \
+    --data-urlencode "sportsbook=$book" \
+    "$API_BASE/fixtures/odds" > "$TMP/odds_raw.json" || echo '{}' > "$TMP/odds_raw.json"
+
+  # Keep only the main lines (moneyline/spread/total), capped — a game can otherwise
+  # carry hundreds of player-prop lines, which is both the size bug above and a
+  # useless wall of text in the "Look up odds" picker.
+  jq -c --argjson cap "$MAX_ODDS_PER_GAME" '
+    [ (.data // [])[] | (.odds // [])[] | select(.is_main == true) | {sportsbook, market, selection, price, points} ]
+    | .[0:$cap]
+  ' "$TMP/odds_raw.json" > "$TMP/odds.json" 2>/dev/null || echo "[]" > "$TMP/odds.json"
+
+  jq -n --slurpfile odds "$TMP/odds.json" --arg label "$label" --arg game "$away @ $home" --arg start "$start" \
+    '{label: $label, game: $game, start: $start, odds: $odds[0]}' >> "$TMP/entries.jsonl"
 done
 
-jq -n --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --argjson entries "$results" \
-  '{generatedAt: $ts, entries: $entries}' > "$OUT"
+jq -s --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{generatedAt: $ts, entries: .}' "$TMP/entries.jsonl" > "$OUT"
 
 echo "Wrote $OUT" >&2
-cat "$OUT" >&2
+wc -c "$OUT" >&2
