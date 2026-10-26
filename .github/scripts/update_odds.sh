@@ -254,6 +254,8 @@ process_player_prop_entry() {
 
   raw_odds_count=$(jq -r '[(.data // [])[] | (.odds // [])[]] | length' "$TMP/odds_raw.json" 2>/dev/null || echo 0)
   echo "  [debug] raw odds entries for this fixture (any market, these books): $raw_odds_count" >&2
+  echo "  [debug] 3 sample raw odds objects, full shape, for the \"$market\" market:" >&2
+  jq -c --arg kw "$kw_pattern" '[(.data // [])[] | (.odds // [])[] | select(.market as $m | ($m // "" | test($kw; "i")))] | .[0:3]' "$TMP/odds_raw.json" >&2 2>/dev/null || true
 
   jq -c --argjson cap "$MAX_ODDS_PER_GAME" --arg kw "$kw_pattern" --arg nm "$name_kw" '
     [ (.data // [])[] | (.odds // [])[]
