@@ -1,0 +1,974 @@
+[
+  {
+    "id": "1xbet",
+    "name": "1XBet"
+  },
+  {
+    "id": "20bet",
+    "name": "20bet"
+  },
+  {
+    "id": "22bet",
+    "name": "22bet"
+  },
+  {
+    "id": "4cx",
+    "name": "4Cx"
+  },
+  {
+    "id": "888sport",
+    "name": "888sport"
+  },
+  {
+    "id": "atg",
+    "name": "ATG"
+  },
+  {
+    "id": "bc_game",
+    "name": "BC.GAME"
+  },
+  {
+    "id": "bet99",
+    "name": "BET99"
+  },
+  {
+    "id": "bally_bet",
+    "name": "Bally Bet"
+  },
+  {
+    "id": "batery",
+    "name": "Batery"
+  },
+  {
+    "id": "bet_right",
+    "name": "Bet Right"
+  },
+  {
+    "id": "betamapola",
+    "name": "BetAmapola"
+  },
+  {
+    "id": "betanything",
+    "name": "BetAnything"
+  },
+  {
+    "id": "betcorrect",
+    "name": "BetCorrect"
+  },
+  {
+    "id": "betdex",
+    "name": "BetDEX"
+  },
+  {
+    "id": "betdsi",
+    "name": "BetDSI"
+  },
+  {
+    "id": "betdeluxe",
+    "name": "BetDeluxe"
+  },
+  {
+    "id": "betgrw",
+    "name": "BetGRW"
+  },
+  {
+    "id": "betmgm",
+    "name": "BetMGM"
+  },
+  {
+    "id": "betmgm_uk_",
+    "name": "BetMGM (UK)"
+  },
+  {
+    "id": "betmania",
+    "name": "BetMania"
+  },
+  {
+    "id": "betnation",
+    "name": "BetNation"
+  },
+  {
+    "id": "betnation_australia_",
+    "name": "BetNation (Australia)"
+  },
+  {
+    "id": "betnow",
+    "name": "BetNow"
+  },
+  {
+    "id": "betonline",
+    "name": "BetOnline"
+  },
+  {
+    "id": "betopenly",
+    "name": "BetOpenly"
+  },
+  {
+    "id": "betrivers",
+    "name": "BetRivers"
+  },
+  {
+    "id": "betrivers_new_york_",
+    "name": "BetRivers (New York)"
+  },
+  {
+    "id": "betus",
+    "name": "BetUS"
+  },
+  {
+    "id": "betvictor",
+    "name": "BetVictor"
+  },
+  {
+    "id": "betano",
+    "name": "Betano"
+  },
+  {
+    "id": "betano_argentina_",
+    "name": "Betano (Argentina)"
+  },
+  {
+    "id": "betano_chile_",
+    "name": "Betano (Chile)"
+  },
+  {
+    "id": "betano_greece_",
+    "name": "Betano (Greece)"
+  },
+  {
+    "id": "betano_united_kingdom_",
+    "name": "Betano (United Kingdom)"
+  },
+  {
+    "id": "betcris",
+    "name": "Betcris"
+  },
+  {
+    "id": "betfair",
+    "name": "Betfair"
+  },
+  {
+    "id": "betfair_exchange",
+    "name": "Betfair Exchange"
+  },
+  {
+    "id": "betfair_exchange_australia_",
+    "name": "Betfair Exchange (Australia)"
+  },
+  {
+    "id": "betfair_exchange_australia_lay_",
+    "name": "Betfair Exchange (Australia) (Lay)"
+  },
+  {
+    "id": "betfair_exchange_lay_",
+    "name": "Betfair Exchange (Lay)"
+  },
+  {
+    "id": "betnacional",
+    "name": "Betnacional"
+  },
+  {
+    "id": "betplay",
+    "name": "Betplay"
+  },
+  {
+    "id": "betr",
+    "name": "Betr"
+  },
+  {
+    "id": "betr_picks",
+    "name": "Betr Picks"
+  },
+  {
+    "id": "betr_picks_all_",
+    "name": "Betr Picks (All)"
+  },
+  {
+    "id": "betr_picks_boosted_",
+    "name": "Betr Picks (BOOSTED)"
+  },
+  {
+    "id": "bets_io",
+    "name": "Bets IO"
+  },
+  {
+    "id": "betsafe",
+    "name": "Betsafe"
+  },
+  {
+    "id": "betsson",
+    "name": "Betsson"
+  },
+  {
+    "id": "betsson_chile_",
+    "name": "Betsson (Chile)"
+  },
+  {
+    "id": "betway",
+    "name": "Betway"
+  },
+  {
+    "id": "betway_alaska_",
+    "name": "Betway (Alaska)"
+  },
+  {
+    "id": "blue_book",
+    "name": "Blue Book"
+  },
+  {
+    "id": "bodog",
+    "name": "Bodog"
+  },
+  {
+    "id": "bookmaker",
+    "name": "BookMaker"
+  },
+  {
+    "id": "boom_fantasy_5_pick_insured_",
+    "name": "Boom Fantasy (5 Pick Insured)"
+  },
+  {
+    "id": "boomers",
+    "name": "Boomers"
+  },
+  {
+    "id": "borgata",
+    "name": "Borgata"
+  },
+  {
+    "id": "bovada",
+    "name": "Bovada"
+  },
+  {
+    "id": "boyle_sports",
+    "name": "Boyle Sports"
+  },
+  {
+    "id": "bracco",
+    "name": "Bracco"
+  },
+  {
+    "id": "caesars",
+    "name": "Caesars"
+  },
+  {
+    "id": "campeonbet",
+    "name": "Campeonbet"
+  },
+  {
+    "id": "campobet",
+    "name": "CampoBet"
+  },
+  {
+    "id": "casumo",
+    "name": "Casumo"
+  },
+  {
+    "id": "chalkboard",
+    "name": "Chalkboard"
+  },
+  {
+    "id": "circa_sports",
+    "name": "Circa Sports"
+  },
+  {
+    "id": "circa_vegas",
+    "name": "Circa Vegas"
+  },
+  {
+    "id": "codere",
+    "name": "Codere"
+  },
+  {
+    "id": "coolbet",
+    "name": "Coolbet"
+  },
+  {
+    "id": "coral",
+    "name": "Coral"
+  },
+  {
+    "id": "courtside",
+    "name": "Courtside"
+  },
+  {
+    "id": "crab_sports",
+    "name": "Crab Sports"
+  },
+  {
+    "id": "dazn_bet",
+    "name": "DAZN Bet"
+  },
+  {
+    "id": "dabble_3_or_5_pick_multipliers_",
+    "name": "Dabble (3 or 5 Pick Multipliers)"
+  },
+  {
+    "id": "dabble_3_or_5_pick_",
+    "name": "Dabble (3 or 5 Pick)"
+  },
+  {
+    "id": "dabble_australia_",
+    "name": "Dabble (Australia)"
+  },
+  {
+    "id": "dafabet",
+    "name": "Dafabet"
+  },
+  {
+    "id": "danske_spil",
+    "name": "Danske Spil"
+  },
+  {
+    "id": "desert_diamond",
+    "name": "Desert Diamond"
+  },
+  {
+    "id": "dogg_house",
+    "name": "Dogg House"
+  },
+  {
+    "id": "draftkings",
+    "name": "DraftKings"
+  },
+  {
+    "id": "draftkings_pick_2_",
+    "name": "DraftKings (Pick 2)"
+  },
+  {
+    "id": "draftkings_pick_3_",
+    "name": "DraftKings (Pick 3)"
+  },
+  {
+    "id": "draftkings_pick_6_multipliers_",
+    "name": "DraftKings (Pick 6 Multipliers)"
+  },
+  {
+    "id": "draftkings_pick_6_",
+    "name": "DraftKings (Pick 6)"
+  },
+  {
+    "id": "draftkings_predictions",
+    "name": "DraftKings Predictions"
+  },
+  {
+    "id": "duel",
+    "name": "Duel"
+  },
+  {
+    "id": "epick",
+    "name": "EPICK"
+  },
+  {
+    "id": "epick_50_50",
+    "name": "EPICK 50/50"
+  },
+  {
+    "id": "elite_bet",
+    "name": "Elite Bet"
+  },
+  {
+    "id": "esportsbet",
+    "name": "Esportsbet"
+  },
+  {
+    "id": "estrela_bet",
+    "name": "Estrela Bet"
+  },
+  {
+    "id": "eurobet",
+    "name": "Eurobet"
+  },
+  {
+    "id": "everygame",
+    "name": "Everygame"
+  },
+  {
+    "id": "fd_predicts",
+    "name": "FD Predicts"
+  },
+  {
+    "id": "fanduel",
+    "name": "FanDuel"
+  },
+  {
+    "id": "fanatics",
+    "name": "Fanatics"
+  },
+  {
+    "id": "fanatics_markets",
+    "name": "Fanatics Markets"
+  },
+  {
+    "id": "firekeepers",
+    "name": "FireKeepers"
+  },
+  {
+    "id": "fliff",
+    "name": "Fliff"
+  },
+  {
+    "id": "fliff_superstars",
+    "name": "Fliff Superstars"
+  },
+  {
+    "id": "fonbet",
+    "name": "Fonbet"
+  },
+  {
+    "id": "four_winds",
+    "name": "Four Winds"
+  },
+  {
+    "id": "ggbet",
+    "name": "GGBet"
+  },
+  {
+    "id": "galera_bet",
+    "name": "Galera.bet"
+  },
+  {
+    "id": "gemini_exchange",
+    "name": "Gemini Exchange"
+  },
+  {
+    "id": "goldbet",
+    "name": "Goldbet"
+  },
+  {
+    "id": "granawin",
+    "name": "Granawin"
+  },
+  {
+    "id": "hard_rock",
+    "name": "Hard Rock"
+  },
+  {
+    "id": "heritage",
+    "name": "Heritage"
+  },
+  {
+    "id": "hotstreak",
+    "name": "HotStreak"
+  },
+  {
+    "id": "jackpot_bet",
+    "name": "Jackpot.bet"
+  },
+  {
+    "id": "jazz_sports",
+    "name": "Jazz Sports"
+  },
+  {
+    "id": "jugabet_argentina_",
+    "name": "Jugabet (Argentina)"
+  },
+  {
+    "id": "jugabet_chile_",
+    "name": "Jugabet (Chile)"
+  },
+  {
+    "id": "justbet",
+    "name": "JustBet"
+  },
+  {
+    "id": "kto",
+    "name": "KTO"
+  },
+  {
+    "id": "kalshi",
+    "name": "Kalshi"
+  },
+  {
+    "id": "ladbrokes",
+    "name": "Ladbrokes"
+  },
+  {
+    "id": "ladbrokes_australia_",
+    "name": "Ladbrokes (Australia)"
+  },
+  {
+    "id": "leovegas",
+    "name": "LeoVegas"
+  },
+  {
+    "id": "limitless_exchange",
+    "name": "Limitless Exchange"
+  },
+  {
+    "id": "lottoland",
+    "name": "Lottoland"
+  },
+  {
+    "id": "lowvig",
+    "name": "LowVig"
+  },
+  {
+    "id": "lucky_casino",
+    "name": "Lucky Casino"
+  },
+  {
+    "id": "marathonbet",
+    "name": "Marathonbet"
+  },
+  {
+    "id": "matchbook_exchange",
+    "name": "Matchbook Exchange"
+  },
+  {
+    "id": "melbet",
+    "name": "Melbet"
+  },
+  {
+    "id": "midnite",
+    "name": "Midnite"
+  },
+  {
+    "id": "mise-o-jeu",
+    "name": "Mise-o-jeu"
+  },
+  {
+    "id": "mybookie",
+    "name": "MyBookie"
+  },
+  {
+    "id": "neds",
+    "name": "Neds"
+  },
+  {
+    "id": "ninja_casino",
+    "name": "Ninja Casino"
+  },
+  {
+    "id": "northstar_bets",
+    "name": "NorthStar Bets"
+  },
+  {
+    "id": "novig",
+    "name": "Novig"
+  },
+  {
+    "id": "onyx_odds",
+    "name": "Onyx Odds"
+  },
+  {
+    "id": "opinion_labs",
+    "name": "Opinion Labs"
+  },
+  {
+    "id": "opticodds_ai",
+    "name": "OpticOdds AI"
+  },
+  {
+    "id": "opticodds_ai_dfs",
+    "name": "OpticOdds AI DFS"
+  },
+  {
+    "id": "orbit_exchange",
+    "name": "Orbit Exchange"
+  },
+  {
+    "id": "overtime",
+    "name": "Overtime"
+  },
+  {
+    "id": "ownersbox",
+    "name": "OwnersBox"
+  },
+  {
+    "id": "ownersbox_6_pick_insured_",
+    "name": "OwnersBox (6 Pick Insured)"
+  },
+  {
+    "id": "ozoon",
+    "name": "Ozoon"
+  },
+  {
+    "id": "pmu",
+    "name": "PMU"
+  },
+  {
+    "id": "ps3838",
+    "name": "PS3838"
+  },
+  {
+    "id": "ps4848",
+    "name": "PS4848"
+  },
+  {
+    "id": "paddy_power",
+    "name": "Paddy Power"
+  },
+  {
+    "id": "parimatch_brazil_",
+    "name": "Parimatch (Brazil)"
+  },
+  {
+    "id": "parimatch_india_",
+    "name": "Parimatch (India)"
+  },
+  {
+    "id": "parlayplay",
+    "name": "ParlayPlay"
+  },
+  {
+    "id": "parlaye",
+    "name": "Parlaye"
+  },
+  {
+    "id": "picklebet",
+    "name": "Picklebet"
+  },
+  {
+    "id": "pinnacle",
+    "name": "Pinnacle"
+  },
+  {
+    "id": "play_alberta",
+    "name": "Play Alberta"
+  },
+  {
+    "id": "play_eagle",
+    "name": "Play Eagle"
+  },
+  {
+    "id": "playnow",
+    "name": "PlayNow"
+  },
+  {
+    "id": "playdoit",
+    "name": "Playdoit"
+  },
+  {
+    "id": "pointsbet_australia_",
+    "name": "PointsBet (Australia)"
+  },
+  {
+    "id": "pointsbet_ontario_",
+    "name": "PointsBet (Ontario)"
+  },
+  {
+    "id": "polymarket",
+    "name": "Polymarket"
+  },
+  {
+    "id": "polymarket_usa_",
+    "name": "Polymarket (USA)"
+  },
+  {
+    "id": "prime_sports",
+    "name": "Prime Sports"
+  },
+  {
+    "id": "prizepicks",
+    "name": "PrizePicks"
+  },
+  {
+    "id": "prizepicks_5_or_6_pick_flex_",
+    "name": "PrizePicks (5 or 6 Pick Flex)"
+  },
+  {
+    "id": "prizepicks_demons_and_goblins_",
+    "name": "PrizePicks (Demons and Goblins)"
+  },
+  {
+    "id": "proline",
+    "name": "Proline"
+  },
+  {
+    "id": "prophet_x",
+    "name": "Prophet X"
+  },
+  {
+    "id": "props_builder",
+    "name": "Props Builder"
+  },
+  {
+    "id": "rebet",
+    "name": "Rebet"
+  },
+  {
+    "id": "rebet_props_city",
+    "name": "Rebet Props City"
+  },
+  {
+    "id": "rivalry",
+    "name": "Rivalry"
+  },
+  {
+    "id": "rizk",
+    "name": "Rizk"
+  },
+  {
+    "id": "robinhood",
+    "name": "Robinhood"
+  },
+  {
+    "id": "rushbet",
+    "name": "RushBet"
+  },
+  {
+    "id": "saba_sports",
+    "name": "SABA Sports"
+  },
+  {
+    "id": "sbobet",
+    "name": "SBOBET"
+  },
+  {
+    "id": "stn_sports",
+    "name": "STN Sports"
+  },
+  {
+    "id": "sx_bet",
+    "name": "SX Bet"
+  },
+  {
+    "id": "sharp",
+    "name": "Sharp"
+  },
+  {
+    "id": "sharp_ag",
+    "name": "Sharp.ag"
+  },
+  {
+    "id": "sleeper",
+    "name": "Sleeper"
+  },
+  {
+    "id": "smarkets",
+    "name": "Smarkets"
+  },
+  {
+    "id": "spinbet",
+    "name": "SpinBet"
+  },
+  {
+    "id": "splash_sports",
+    "name": "Splash Sports"
+  },
+  {
+    "id": "sportbet",
+    "name": "Sportbet"
+  },
+  {
+    "id": "sportingbet",
+    "name": "Sportingbet"
+  },
+  {
+    "id": "sports_interaction",
+    "name": "Sports Interaction"
+  },
+  {
+    "id": "sportsbet",
+    "name": "Sportsbet"
+  },
+  {
+    "id": "sportsbetting_ag",
+    "name": "Sportsbetting.ag"
+  },
+  {
+    "id": "sporttrade",
+    "name": "Sporttrade"
+  },
+  {
+    "id": "sportzino",
+    "name": "Sportzino"
+  },
+  {
+    "id": "stake",
+    "name": "Stake"
+  },
+  {
+    "id": "sugarhouse",
+    "name": "SugarHouse"
+  },
+  {
+    "id": "sunbet",
+    "name": "SunBet"
+  },
+  {
+    "id": "supabets",
+    "name": "Supabets"
+  },
+  {
+    "id": "superbet",
+    "name": "Superbet"
+  },
+  {
+    "id": "surgebet",
+    "name": "SurgeBet"
+  },
+  {
+    "id": "svenskaspel",
+    "name": "Svenskaspel"
+  },
+  {
+    "id": "tab",
+    "name": "TAB"
+  },
+  {
+    "id": "tab_new_zealand_",
+    "name": "TAB (New Zealand)"
+  },
+  {
+    "id": "tabtouch",
+    "name": "TABtouch"
+  },
+  {
+    "id": "tailgate_exchange",
+    "name": "Tailgate Exchange"
+  },
+  {
+    "id": "team_mexico",
+    "name": "Team Mexico"
+  },
+  {
+    "id": "thrillzz",
+    "name": "Thrillzz"
+  },
+  {
+    "id": "thrivefantasy",
+    "name": "ThriveFantasy"
+  },
+  {
+    "id": "thunderpick",
+    "name": "Thunderpick"
+  },
+  {
+    "id": "tipsport",
+    "name": "Tipsport"
+  },
+  {
+    "id": "tonybet",
+    "name": "TonyBet"
+  },
+  {
+    "id": "twinspires",
+    "name": "TwinSpires"
+  },
+  {
+    "id": "underdog_fantasy",
+    "name": "Underdog Fantasy"
+  },
+  {
+    "id": "underdog_fantasy_2_pick_",
+    "name": "Underdog Fantasy (2 Pick)"
+  },
+  {
+    "id": "underdog_fantasy_3_or_5_pick_",
+    "name": "Underdog Fantasy (3 or 5 Pick)"
+  },
+  {
+    "id": "underdog_fantasy_4_pick_flex_",
+    "name": "Underdog Fantasy (4 Pick Flex)"
+  },
+  {
+    "id": "underdog_fantasy_multipliers_",
+    "name": "Underdog Fantasy (Multipliers)"
+  },
+  {
+    "id": "underdog_predictions",
+    "name": "Underdog Predictions"
+  },
+  {
+    "id": "unibet",
+    "name": "Unibet"
+  },
+  {
+    "id": "unibet_australia_",
+    "name": "Unibet (Australia)"
+  },
+  {
+    "id": "unibet_denmark_",
+    "name": "Unibet (Denmark)"
+  },
+  {
+    "id": "unibet_france_",
+    "name": "Unibet (France)"
+  },
+  {
+    "id": "unibet_sweden_",
+    "name": "Unibet (Sweden)"
+  },
+  {
+    "id": "unibet_united_kingdom_",
+    "name": "Unibet (United Kingdom)"
+  },
+  {
+    "id": "veikkaus",
+    "name": "Veikkaus"
+  },
+  {
+    "id": "wanna_parlay",
+    "name": "Wanna Parlay"
+  },
+  {
+    "id": "webull",
+    "name": "Webull"
+  },
+  {
+    "id": "william_hill",
+    "name": "William Hill"
+  },
+  {
+    "id": "winpot",
+    "name": "Winpot"
+  },
+  {
+    "id": "world_sports_betting",
+    "name": "World Sports Betting"
+  },
+  {
+    "id": "youwager",
+    "name": "YouWager"
+  },
+  {
+    "id": "bet105",
+    "name": "bet105"
+  },
+  {
+    "id": "bet105_us",
+    "name": "bet105.us"
+  },
+  {
+    "id": "bet365",
+    "name": "bet365"
+  },
+  {
+    "id": "betjack",
+    "name": "betJACK"
+  },
+  {
+    "id": "betparx",
+    "name": "betPARX"
+  },
+  {
+    "id": "betr_australia_",
+    "name": "betr (Australia)"
+  },
+  {
+    "id": "betwhale",
+    "name": "betwhale"
+  },
+  {
+    "id": "bwin",
+    "name": "bwin"
+  },
+  {
+    "id": "crypto_com",
+    "name": "crypto.com"
+  },
+  {
+    "id": "ibet",
+    "name": "iBet"
+  },
+  {
+    "id": "partypoker",
+    "name": "partypoker"
+  },
+  {
+    "id": "thescore",
+    "name": "theScore"
+  }
+]
