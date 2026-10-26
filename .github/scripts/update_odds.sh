@@ -206,7 +206,12 @@ process_player_prop_entry() {
     echo "  [debug] league=355 (nba's numerical_id) -> $(jq -r '(.data // []) | length' "$TMP/probe3.json" 2>/dev/null || echo '?') players" >&2
     curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/players?league=NBA&page=1" > "$TMP/probe4.json" 2>/dev/null || echo '{}' > "$TMP/probe4.json"
     echo "  [debug] league=NBA (name, re-confirming) -> $(jq -r '(.data // []) | length' "$TMP/probe4.json" 2>/dev/null || echo '?') players" >&2
-    for f in probe1 probe2 probe3 probe4; do
+    # Cross-check: is this basketball-specific, or does /players return nothing for ANY
+    # sport? NFL is a good control since /fixtures/active already proved that league
+    # filtering works correctly for it.
+    curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/players?sport=football&page=1" > "$TMP/probe5.json" 2>/dev/null || echo '{}' > "$TMP/probe5.json"
+    echo "  [debug] CONTROL sport=football (no league) -> $(jq -r '(.data // []) | length' "$TMP/probe5.json" 2>/dev/null || echo '?') players" >&2
+    for f in probe1 probe2 probe3 probe4 probe5; do
       n=$(jq -r '(.data // []) | length' "$TMP/$f.json" 2>/dev/null || echo 0)
       if [ "$n" != "0" ] && [ "$n" != "?" ]; then
         echo "  [debug] >>> $f worked! sample: $(jq -c '(.data // [])[0] | {id,name}' "$TMP/$f.json" 2>/dev/null)" >&2
