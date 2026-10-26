@@ -401,14 +401,15 @@ footer{margin-top:40px; padding-top:16px; border-top:1px solid var(--border); fo
   <div class="drawer-body">
     <input type="hidden" id="betId">
     <div class="paste-box" id="pasteBox">
-      <button type="button" class="btn ghost sm" id="btnTogglePaste" style="width:100%; justify-content:center;">Paste a bet confirmation to auto-fill</button>
+      <button type="button" class="btn ghost sm" id="btnTogglePaste" style="width:100%; justify-content:center;">Type a bet to find live odds</button>
       <div id="pasteArea" style="display:none; margin-top:8px;">
-        <textarea id="pasteText" placeholder="Paste the confirmation text or bet-slip copy from your sportsbook app…" style="min-height:76px;"></textarea>
+        <textarea id="pasteText" placeholder="e.g. &quot;mahomes passing yards over 275.5&quot;, or paste a bet-slip confirmation…" style="min-height:76px;"></textarea>
         <div style="display:flex; gap:8px; margin-top:7px;">
-          <button type="button" class="btn primary sm" id="btnParsePaste">Parse &amp; fill</button>
+          <button type="button" class="btn primary sm" id="btnParsePaste">Find odds</button>
           <button type="button" class="btn ghost sm" id="btnCancelPaste">Cancel</button>
         </div>
         <div class="paste-result" id="pasteResult"></div>
+        <div id="liveOddsResults" style="margin-top:8px;"></div>
       </div>
     </div>
     <div class="odds-box" id="oddsBox">
@@ -971,11 +972,13 @@ var editingId = null;
 function openDrawer(id){
   editingId = id || null;
   pendingTrackId = null;
+  pendingTrackProp = null;
   var bet = id ? state.bets.find(function(b){return b.id===id;}) : null;
   document.getElementById("drawerTitle").textContent = bet ? "Edit Bet" : "Log a Bet";
   document.getElementById("pasteArea").style.display = "none";
   document.getElementById("pasteText").value = "";
   document.getElementById("pasteResult").classList.remove("show");
+  document.getElementById("liveOddsResults").innerHTML = "";
   document.getElementById("pasteBox").style.display = bet ? "none" : "block";
   document.getElementById("oddsArea").style.display = "none";
   document.getElementById("oddsWatchlist").innerHTML = "";
@@ -1193,28 +1196,24 @@ function parsePropShorthand(text){
   }
   return null;
 }
-function trackedBetSnippet(prop, book, odds, id){
-  var obj = {
+function trackedBetObject(prop, sport, book, odds, id){
+  return {
     id: id,
     label: prop.player+" "+prop.stat+(prop.side?" "+prop.side+" "+prop.line:"")+" ("+(book||"book TBD")+(odds!=null?" @ "+fmtOdds(odds):"")+")",
     type: "player_prop",
-    sport: prop.sportHint || "(set sport)",
+    sport: sport || prop.sportHint || "",
     player: prop.player,
     market: prop.stat,
     side: prop.side || "",
     line: prop.line || "",
     placedBook: book || "",
-    wageredOdds: odds!=null ? odds : "",
-    sharpBooks: SHARP_BOOKS,
-    status: "tracking",
-    openingOdds: null,
-    liveOdds: null,
-    closingOdds: null
+    wageredOdds: odds!=null ? odds : null,
+    sharpBooks: SHARP_BOOKS
   };
-  return JSON.stringify(obj, null, 2);
 }
 function newTrackId(){ return "t"+Date.now()+Math.random().toString(36).slice(2,7); }
 var pendingTrackId = null;
+var pendingTrackProp = null;
 
 document.getElementById("btnTogglePaste").addEventListener("click", function(){
   var area = document.getElementById("pasteArea");
@@ -1226,7 +1225,9 @@ document.getElementById("btnCancelPaste").addEventListener("click", function(){
   document.getElementById("pasteArea").style.display = "none";
   document.getElementById("pasteText").value = "";
   document.getElementById("pasteResult").classList.remove("show");
+  document.getElementById("liveOddsResults").innerHTML = "";
   pendingTrackId = null;
+  pendingTrackProp = null;
 });
 document.getElementById("btnParsePaste").addEventListener("click", function(){
   var raw = document.getElementById("pasteText").value;
@@ -1252,34 +1253,55 @@ document.getElementById("btnParsePaste").addEventListener("click", function(){
   apply("fieldTaken", parsed.oddsTaken, "Odds", function(v){return fmtOdds(v);});
   updateLiveCalc();
   var result = document.getElementById("pasteResult");
-  var html = '<div class="paste-chips">'+chips.map(function(c){
+  result.innerHTML = '<div class="paste-chips">'+chips.map(function(c){
     return '<span class="paste-chip'+(c.hit?'':' miss')+'">'+(c.hit?c.label:c.label+" — not found")+'</span>';
   }).join("")+'</div><div style="margin-top:6px;">Double-check the fields below before saving — parsing is a best guess.</div>';
+  result.classList.add("show");
   if(prop){
     pendingTrackId = pendingTrackId || newTrackId();
-    var snippet = trackedBetSnippet(prop, parsed.book, parsed.oddsTaken, pendingTrackId);
-    html += '<div style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--border-strong);">'+
-      '<div style="font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--fg-muted); margin-bottom:5px;">Track this bet\'s price (sharp books: '+SHARP_BOOKS.join(", ")+')</div>'+
-      '<textarea readonly style="min-height:130px; font-family:var(--font-mono); font-size:11px; width:100%;">'+snippet.replace(/</g,"&lt;")+'</textarea>'+
-      '<div style="display:flex; gap:8px; margin-top:6px;">'+
-      '<button type="button" class="btn sm primary" id="btnCopyPropSnippet">Copy snippet</button>'+
-      '</div>'+
-      '<div style="font-size:11px; color:var(--fg-faint); margin-top:5px;">Paste this into the <code>bets</code> array in bets.json on GitHub (fix "sport" if needed). Once it\'s tracking, save this bet below (same id) — opening price, live price, and the closing line will sync in automatically every 10 minutes until kickoff.</div>'+
-      '</div>';
-    result.innerHTML = html;
-    document.getElementById("btnCopyPropSnippet").addEventListener("click", function(){
-      var ta = result.querySelector("textarea");
-      ta.select();
-      try{
-        navigator.clipboard.writeText(snippet).then(function(){ toast("Snippet copied."); }).catch(function(){ toast("Copied via selection — press Cmd/Ctrl+C."); });
-      }catch(e){ toast("Press Cmd/Ctrl+C to copy the selected text."); }
-    });
+    pendingTrackProp = prop;
+    searchLiveOdds(prop, document.getElementById("fieldSport").value);
   } else {
     pendingTrackId = null;
-    result.innerHTML = html;
+    pendingTrackProp = null;
+    document.getElementById("liveOddsResults").innerHTML = "";
   }
-  result.classList.add("show");
 });
+function searchLiveOdds(prop, sport){
+  var box = document.getElementById("liveOddsResults");
+  if(!sport){
+    box.innerHTML = '<div class="odds-loading">Set the sport above, then click "Parse &amp; fill" again to look up live odds.</div>';
+    return;
+  }
+  box.innerHTML = '<div class="odds-loading">Looking up live odds for '+prop.player+'…</div>';
+  var qs = "player="+encodeURIComponent(prop.player)+"&market="+encodeURIComponent(prop.stat)+"&sport="+encodeURIComponent(sport);
+  fetch("/api/search?"+qs, {cache:"no-store"})
+    .then(function(r){ return r.json().then(function(data){ return {ok:r.ok, data:data}; }); })
+    .then(function(res){
+      var data = res.data || {};
+      var odds = data.odds || [];
+      if(!res.ok || !odds.length){
+        box.innerHTML = '<div class="odds-loading">'+(data.error||"No live odds found yet.")+'</div>';
+        return;
+      }
+      box.innerHTML = '<div class="odds-fixture-list">'+odds.map(function(o,i){
+        var label = o.market+(o.points!=null?" "+o.points:"")+" — "+o.selection;
+        return '<button type="button" class="odds-fixture" data-i="'+i+'"><div class="t">'+o.sportsbook+' '+fmtOdds(o.price)+'</div><div class="d">'+label+'</div></button>';
+      }).join("")+'</div>';
+      box.querySelectorAll(".odds-fixture").forEach(function(btn){
+        btn.addEventListener("click", function(){
+          var o = odds[Number(btn.getAttribute("data-i"))];
+          document.getElementById("fieldBook").value = o.sportsbook;
+          document.getElementById("fieldTaken").value = o.price;
+          updateLiveCalc();
+          toast("Filled "+o.sportsbook+" "+fmtOdds(o.price)+" — save to start tracking this bet's price automatically.");
+        });
+      });
+    })
+    .catch(function(){
+      box.innerHTML = '<div class="odds-error">Live odds lookup unavailable right now — this bet will still save to your ledger, just without auto-tracking.</div>';
+    });
+}
 
 /* ---------- bet tracking sync (bets.json is built by the "Update Odds" GitHub Action, read as a static file) ---------- */
 document.getElementById("btnToggleOdds").addEventListener("click", function(){
@@ -1366,6 +1388,7 @@ function saveBetFromForm(){
   if(!taken || isNaN(Number(taken))){ toast("Enter odds at wager."); return; }
   if(!stake || stake<=0){ toast("Enter a stake greater than 0."); return; }
   var existing = editingId ? state.bets.find(function(b){return b.id===editingId;}) : null;
+  var trackProp = (!editingId && pendingTrackProp) ? pendingTrackProp : null;
   var bet = {
     id: editingId || pendingTrackId || ("b"+Date.now()+Math.random().toString(36).slice(2,7)),
     sport: document.getElementById("fieldSport").value,
@@ -1393,9 +1416,34 @@ function saveBetFromForm(){
   }
   saveBets(state.bets);
   pendingTrackId = null;
+  pendingTrackProp = null;
   closeDrawer();
   renderAll();
-  toast(editingId ? "Bet updated." : (bet.tracked ? "Bet logged — tracking its price automatically." : "Bet logged."));
+  if(trackProp){
+    toast("Bet logged — registering for live tracking…");
+    registerTracking(bet, trackProp);
+  } else {
+    toast(editingId ? "Bet updated." : "Bet logged.");
+  }
+}
+function registerTracking(bet, prop){
+  var payload = trackedBetObject(prop, bet.sport, bet.book, bet.oddsTaken, bet.id);
+  fetch("/api/track", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({bet: payload})
+  })
+    .then(function(r){ return r.json().then(function(data){ return {ok:r.ok, data:data}; }); })
+    .then(function(res){
+      if(res.ok && res.data && res.data.ok){
+        toast("Now tracking "+bet.selection+" — opening/live/closing prices will sync in automatically.");
+      } else {
+        toast("Bet logged, but tracking setup failed: "+((res.data&&res.data.error)||"unknown error"));
+      }
+    })
+    .catch(function(){
+      toast("Bet logged, but couldn't reach the tracking service.");
+    });
 }
 
 /* ---------- confirm modal ---------- */
