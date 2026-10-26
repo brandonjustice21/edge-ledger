@@ -163,21 +163,18 @@ process_player_prop_entry() {
     return
   fi
 
-  # Round 1 proved "NBA" (uppercase) returns a perfectly valid, empty response
-  # ({"data":[],"has_more":false}) — HTTP 200, not an error, just the wrong league code.
-  # Revert to lowercase (confirmed working for /fixtures/active with NFL). If this is
-  # STILL empty, dump /leagues so the real id shows up in the log instead of guessing again.
+  # Confirmed against the live API: /players?league=<id>&page=N works (100 real players
+  # came back for sport=football) — so this is the right call shape. NBA specifically
+  # came back empty across every parameter variant tried (league id, numerical id, name,
+  # sport alone), which is a data-coverage gap for that league on OddsJam's/OpticOdds'
+  # side, not a bug here. If a league keeps coming back with zero despite a real player
+  # name, that's the first thing to suspect — not the request format.
   echo "Searching $op_league players for \"$player\"..." >&2
-  pid=""; pname=""
+  pid=""; pname=""; total_seen=0
   for page in $(seq 1 "$PLAYER_SEARCH_PAGES"); do
-    if [ "$page" = "1" ]; then
-      http_status=$(curl -sS -o "$TMP/players.json" -w '%{http_code}' -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/players?league=$op_league&page=$page" || echo "000")
-      echo "  [debug] GET /players?league=$op_league&page=1 -> HTTP $http_status" >&2
-      echo "  [debug] body (first 500 chars): $(head -c 500 "$TMP/players.json")" >&2
-    else
-      curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/players?league=$op_league&page=$page" > "$TMP/players.json" || echo '{}' > "$TMP/players.json"
-    fi
-    echo "  page $page: $(jq -r '(.data // []) | length' "$TMP/players.json" 2>/dev/null || echo '?') players returned, has_more=$(jq -r '.has_more // "?"' "$TMP/players.json" 2>/dev/null)" >&2
+    curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/players?league=$op_league&page=$page" > "$TMP/players.json" || echo '{}' > "$TMP/players.json"
+    page_n=$(jq -r '(.data // []) | length' "$TMP/players.json" 2>/dev/null || echo 0)
+    total_seen=$((total_seen + page_n))
     found=$(jq -c --arg name "$player" '
       (.data // []) | map(select(
         (.name // "" | test($name; "i")) or (.last_name // "" | test($name; "i"))
@@ -193,35 +190,13 @@ process_player_prop_entry() {
   done
 
   if [ -z "$pid" ]; then
-    # /leagues confirmed "nba" (lowercase) IS the real, valid league id — so the league
-    # value itself isn't the problem; something else about how /players wants it called
-    # is. Try a few parameter shapes side by side and log how many players each returns,
-    # so whichever one actually works is obvious instead of another single blind guess.
-    echo "  [debug] still no match with league=$op_league. Probing alternate /players parameter shapes:" >&2
-    curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/players?sport=$op_sport&page=1" > "$TMP/probe1.json" 2>/dev/null || echo '{}' > "$TMP/probe1.json"
-    echo "  [debug] sport=$op_sport only -> $(jq -r '(.data // []) | length' "$TMP/probe1.json" 2>/dev/null || echo '?') players" >&2
-    curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/players?sport=$op_sport&league=$op_league&page=1" > "$TMP/probe2.json" 2>/dev/null || echo '{}' > "$TMP/probe2.json"
-    echo "  [debug] sport=$op_sport + league=$op_league -> $(jq -r '(.data // []) | length' "$TMP/probe2.json" 2>/dev/null || echo '?') players" >&2
-    curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/players?league=355&page=1" > "$TMP/probe3.json" 2>/dev/null || echo '{}' > "$TMP/probe3.json"
-    echo "  [debug] league=355 (nba's numerical_id) -> $(jq -r '(.data // []) | length' "$TMP/probe3.json" 2>/dev/null || echo '?') players" >&2
-    curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/players?league=NBA&page=1" > "$TMP/probe4.json" 2>/dev/null || echo '{}' > "$TMP/probe4.json"
-    echo "  [debug] league=NBA (name, re-confirming) -> $(jq -r '(.data // []) | length' "$TMP/probe4.json" 2>/dev/null || echo '?') players" >&2
-    # Cross-check: is this basketball-specific, or does /players return nothing for ANY
-    # sport? NFL is a good control since /fixtures/active already proved that league
-    # filtering works correctly for it.
-    curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/players?sport=football&page=1" > "$TMP/probe5.json" 2>/dev/null || echo '{}' > "$TMP/probe5.json"
-    echo "  [debug] CONTROL sport=football (no league) -> $(jq -r '(.data // []) | length' "$TMP/probe5.json" 2>/dev/null || echo '?') players" >&2
-    for f in probe1 probe2 probe3 probe4 probe5; do
-      n=$(jq -r '(.data // []) | length' "$TMP/$f.json" 2>/dev/null || echo 0)
-      if [ "$n" != "0" ] && [ "$n" != "?" ]; then
-        echo "  [debug] >>> $f worked! sample: $(jq -c '(.data // [])[0] | {id,name}' "$TMP/$f.json" 2>/dev/null)" >&2
-      fi
-    done
-  fi
-
-  if [ -z "$pid" ]; then
-    jq -n --arg label "$label" --arg error "No $op_league player matched \"$player\" in the first $PLAYER_SEARCH_PAGES pages. Check spelling, or that \"sport\" in watchlist.json is this player's real league." \
-      '{label: $label, error: $error}' >> "$TMP/entries.jsonl"
+    if [ "$total_seen" = "0" ]; then
+      jq -n --arg label "$label" --arg error "OddsJam returned zero players for league \"$op_league\" — this looks like a data-coverage gap for that league on their end (not a bad request), not a spelling issue. Confirm with OddsJam/OpticOdds support whether player data is available for this league." \
+        '{label: $label, error: $error}' >> "$TMP/entries.jsonl"
+    else
+      jq -n --arg label "$label" --arg error "No $op_league player matched \"$player\" across $total_seen players checked. Check spelling." \
+        '{label: $label, error: $error}' >> "$TMP/entries.jsonl"
+    fi
     return
   fi
 
