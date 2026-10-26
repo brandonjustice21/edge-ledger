@@ -11,5 +11,17 @@
     "placedBook": "DraftKings",
     "placedOdds": 150,
     "sharpBooks": ["DraftKings", "FanDuel", "Novig", "Kalshi", "Pinnacle", "Circa"]
+  },
+  {
+    "label": "Mahomes Passing Yards Over 275.5 (FanDuel @ -110)",
+    "type": "player_prop",
+    "sport": "NFL",
+    "player": "Mahomes",
+    "market": "Passing Yards",
+    "side": "Over",
+    "line": "275.5",
+    "placedBook": "FanDuel",
+    "placedOdds": -110,
+    "sharpBooks": ["DraftKings", "FanDuel", "Novig", "Kalshi", "Pinnacle", "Circa"]
   }
 ]
