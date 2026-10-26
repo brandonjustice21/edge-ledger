@@ -213,6 +213,12 @@ process_player_prop_entry() {
 
   kw_pattern=$(market_keywords "$market")
 
+  raw_odds_count=$(jq -r '[(.data // [])[] | (.odds // [])[]] | length' "$TMP/odds_raw.json" 2>/dev/null || echo 0)
+  echo "  [debug] raw odds entries for this player (any market, these books) before filtering: $raw_odds_count" >&2
+  if [ "$raw_odds_count" != "0" ]; then
+    echo "  [debug] distinct market names seen: $(jq -c '[(.data // [])[] | (.odds // [])[] | .market] | unique' "$TMP/odds_raw.json" 2>/dev/null)" >&2
+  fi
+
   jq -c --argjson cap "$MAX_ODDS_PER_GAME" --arg kw "$kw_pattern" '
     [ (.data // [])[] | (.odds // [])[]
       | select(.market as $m | ($m // "" | test($kw; "i")))
