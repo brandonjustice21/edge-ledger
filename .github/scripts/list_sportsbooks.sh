@@ -28,7 +28,7 @@ done
 
 total=$(wc -l < "$TMP/all.jsonl" | tr -d ' ')
 echo "=== Total sportsbooks: $total ==="
-echo "=== Full list (id -> name) ==="
-jq -s -c 'sort_by(.name) | .[] | [.id, .name]' "$TMP/all.jsonl"
-echo "=== Just the names, as a JS array literal ==="
-jq -s -r 'sort_by(.name) | map(.name) | @json' "$TMP/all.jsonl"
+
+mkdir -p docs
+jq -s 'sort_by(.name)' "$TMP/all.jsonl" > docs/_sportsbooks-dump.json
+echo "Wrote docs/_sportsbooks-dump.json ($total entries)"
