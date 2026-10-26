@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-26T19:45:56Z",
+  "generatedAt": "2026-10-26T19:55:20Z",
   "entries": [
     {
       "label": "Example: Chiefs game",
@@ -8,24 +8,10 @@
       "odds": [
         {
           "sportsbook": "DraftKings",
-          "market": "Moneyline",
-          "selection": "Kansas City Chiefs",
-          "price": -125,
-          "points": null
-        },
-        {
-          "sportsbook": "DraftKings",
           "market": "Point Spread",
           "selection": "Kansas City Chiefs",
           "price": -110,
           "points": -1.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Moneyline",
-          "selection": "Denver Broncos",
-          "price": 105,
-          "points": null
         },
         {
           "sportsbook": "DraftKings",
@@ -36,10 +22,10 @@
         },
         {
           "sportsbook": "DraftKings",
-          "market": "Total Points",
-          "selection": "Under 41.5",
-          "price": -115,
-          "points": 41.5
+          "market": "Moneyline",
+          "selection": "Kansas City Chiefs",
+          "price": -125,
+          "points": null
         },
         {
           "sportsbook": "DraftKings",
@@ -47,6 +33,20 @@
           "selection": "Denver Broncos",
           "price": -110,
           "points": 1.5
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Total Points",
+          "selection": "Under 41.5",
+          "price": -115,
+          "points": 41.5
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Moneyline",
+          "selection": "Denver Broncos",
+          "price": 105,
+          "points": null
         }
       ]
     },
@@ -56,11 +56,11 @@
     },
     {
       "label": "Mahomes Passing Yards Over 275.5 (FanDuel @ -110)",
-      "error": "Matched Patrick Mahomes's fixture (20261101ACD99729), but these sharp books have posted no odds for it at all yet — normal well before kickoff. Re-run closer to game time."
+      "error": "Matched Patrick Mahomes's fixture (1661 odds lines total), but none matched market \"Passing Yards\" for this player. Check the Action log and adjust market_keywords() in update_odds.sh."
     },
     {
       "label": "Hurts Passing Yards Over 215.5 (DraftKings) - tonight's game",
-      "error": "Matched Jalen Hurts's fixture (20261027271AB6CD), but these sharp books have posted no odds for it at all yet — normal well before kickoff. Re-run closer to game time."
+      "error": "Matched Jalen Hurts's fixture (7169 odds lines total), but none matched market \"Passing Yards\" for this player. Check the Action log and adjust market_keywords() in update_odds.sh."
     }
   ]
 }
