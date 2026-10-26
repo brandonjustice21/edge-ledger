@@ -1,25 +1,11 @@
 {
-  "generatedAt": "2026-10-26T17:53:40Z",
+  "generatedAt": "2026-10-26T18:39:37Z",
   "entries": [
     {
       "label": "Example: Chiefs game",
       "game": "Kansas City Chiefs @ Denver Broncos",
       "start": "2026-11-01T21:25:00Z",
       "odds": [
-        {
-          "sportsbook": "DraftKings",
-          "market": "Point Spread",
-          "selection": "Kansas City Chiefs",
-          "price": -110,
-          "points": -1.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Moneyline",
-          "selection": "Denver Broncos",
-          "price": 105,
-          "points": null
-        },
         {
           "sportsbook": "DraftKings",
           "market": "Total Points",
@@ -37,8 +23,8 @@
         {
           "sportsbook": "DraftKings",
           "market": "Moneyline",
-          "selection": "Kansas City Chiefs",
-          "price": -125,
+          "selection": "Denver Broncos",
+          "price": 105,
           "points": null
         },
         {
@@ -47,8 +33,26 @@
           "selection": "Denver Broncos",
           "price": -110,
           "points": 1.5
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Moneyline",
+          "selection": "Kansas City Chiefs",
+          "price": -125,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Point Spread",
+          "selection": "Kansas City Chiefs",
+          "price": -110,
+          "points": -1.5
         }
       ]
+    },
+    {
+      "label": "Brunson Assists Over 6.5 (DraftKings @ +150)",
+      "error": "No nba player matched \"Brunson\" in the first 8 pages. Check spelling, or that \"sport\" in watchlist.json is this player's real league."
     }
   ]
 }
