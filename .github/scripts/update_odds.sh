@@ -224,15 +224,28 @@ process_player_prop_entry() {
   fi
 
   echo "Found fixture $fid. Fetching \"$market\" odds from sharp books..." >&2
-  local -a sb_args=()
-  while IFS= read -r sb; do
-    sb_args+=(--data-urlencode "sportsbook=$sb")
-  done < <(echo "$sharp_books" | jq -r '.[]')
+  # Confirmed by direct test: this endpoint hard-caps at 5 sportsbooks per request
+  # ({"error":"maximum 5 sportsbooks allowed"}) — that's exactly why every player-prop
+  # lookup came back with 0 raw odds despite real data existing: our 6-book sharp list
+  # (DraftKings/FanDuel/Novig/Kalshi/Pinnacle/Circa) silently failed the whole request.
+  # Batch into chunks of <=5 and merge, so a 6th (or 10th) book never drops the others.
+  local -a all_books=() chunk=()
+  while IFS= read -r sb; do all_books+=("$sb"); done < <(echo "$sharp_books" | jq -r '.[]')
 
-  curl -sS -G -H "X-Api-Key: $ODDSJAM_API_KEY" \
-    --data-urlencode "fixture_id=$fid" \
-    "${sb_args[@]}" \
-    "$API_BASE/fixtures/odds" > "$TMP/odds_raw.json" || echo '{}' > "$TMP/odds_raw.json"
+  : > "$TMP/odds_parts.jsonl"
+  local i=0
+  while [ "$i" -lt "${#all_books[@]}" ]; do
+    chunk=("${all_books[@]:$i:5}")
+    local -a sb_args=()
+    for sb in "${chunk[@]}"; do sb_args+=(--data-urlencode "sportsbook=$sb"); done
+    curl -sS -G -H "X-Api-Key: $ODDSJAM_API_KEY" \
+      --data-urlencode "fixture_id=$fid" \
+      "${sb_args[@]}" \
+      "$API_BASE/fixtures/odds" >> "$TMP/odds_parts.jsonl" || echo '{}' >> "$TMP/odds_parts.jsonl"
+    echo >> "$TMP/odds_parts.jsonl"
+    i=$((i + 5))
+  done
+  jq -s '{data: (map(.data // []) | add // [])}' "$TMP/odds_parts.jsonl" > "$TMP/odds_raw.json" 2>/dev/null || echo '{"data":[]}' > "$TMP/odds_raw.json"
 
   kw_pattern=$(market_keywords "$market")
   # last name only, for matching against the selection text (e.g. "Hurts" in
