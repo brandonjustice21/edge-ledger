@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-26T19:00:53Z",
+  "generatedAt": "2026-10-26T19:03:57Z",
   "entries": [
     {
       "label": "Example: Chiefs game",
@@ -9,16 +9,9 @@
         {
           "sportsbook": "DraftKings",
           "market": "Point Spread",
-          "selection": "Kansas City Chiefs",
+          "selection": "Denver Broncos",
           "price": -110,
-          "points": -1.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Total Points",
-          "selection": "Over 41.5",
-          "price": -105,
-          "points": 41.5
+          "points": 1.5
         },
         {
           "sportsbook": "DraftKings",
@@ -30,13 +23,6 @@
         {
           "sportsbook": "DraftKings",
           "market": "Moneyline",
-          "selection": "Kansas City Chiefs",
-          "price": -125,
-          "points": null
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Moneyline",
           "selection": "Denver Broncos",
           "price": 105,
           "points": null
@@ -44,15 +30,29 @@
         {
           "sportsbook": "DraftKings",
           "market": "Point Spread",
-          "selection": "Denver Broncos",
+          "selection": "Kansas City Chiefs",
           "price": -110,
-          "points": 1.5
+          "points": -1.5
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Moneyline",
+          "selection": "Kansas City Chiefs",
+          "price": -125,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Total Points",
+          "selection": "Over 41.5",
+          "price": -105,
+          "points": 41.5
         }
       ]
     },
     {
       "label": "Brunson Assists Over 6.5 (DraftKings @ +150)",
-      "error": "No nba player matched \"Brunson\" in the first 8 pages. Check spelling, or that \"sport\" in watchlist.json is this player's real league."
+      "error": "OddsJam returned zero players for league \"nba\" — this looks like a data-coverage gap for that league on their end (not a bad request), not a spelling issue. Confirm with OddsJam/OpticOdds support whether player data is available for this league."
     }
   ]
 }
