@@ -387,7 +387,7 @@ footer{margin-top:40px; padding-top:16px; border-top:1px solid var(--border); fo
   </div>
 
   <footer>
-    EV is estimated from closing-line value: once a closing price is logged, your price at wager is compared against it to estimate fair edge before the result is known — the standard way sharp bettors measure skill independent of variance. It assumes the closing line is single-sided fair value; enter opposing closing odds in Notes if you want to de-vig by hand. All data stays in this browser only (nothing is sent anywhere) — use Export backup regularly, since clearing site data or switching browsers will lose it. Automatic bet capture from sportsbooks isn't built in yet; the CSV import is the fastest bulk-entry path for now.
+    EV is estimated from closing-line value: once a closing price is known, your price at wager is compared against it to estimate fair edge before the result is known — the standard way sharp bettors measure skill independent of variance. Type a bet into "Paste a bet confirmation" (e.g. "brunson assists over 6.5 at draftkings +150") to track it automatically — the Update Odds GitHub Action checks sharp books (DraftKings, FanDuel, Novig, Kalshi, Pinnacle, Circa Sports) every 10 minutes, capturing an opening price, a live price that updates until kickoff, and a closing price once the line locks; CLV%/EV shown before kickoff (marked with ~) use the live price as a provisional stand-in. You set the outcome (won/lost/push/etc.) yourself once the bet settles. It assumes the closing line is single-sided fair value; enter opposing closing odds in Notes if you want to de-vig by hand. All ledger data stays in this browser only (nothing is sent anywhere) — use Export backup regularly, since clearing site data or switching browsers will lose it.
   </footer>
 </div>
 
@@ -412,11 +412,11 @@ footer{margin-top:40px; padding-top:16px; border-top:1px solid var(--border); fo
       </div>
     </div>
     <div class="odds-box" id="oddsBox">
-      <button type="button" class="btn ghost sm" id="btnToggleOdds" style="width:100%; justify-content:center;">Look up odds (OddsJam snapshot)</button>
+      <button type="button" class="btn ghost sm" id="btnToggleOdds" style="width:100%; justify-content:center;">Sync tracked bets (bets.json)</button>
       <div id="oddsArea" style="display:none; margin-top:8px;">
-        <button type="button" class="btn primary sm" id="btnLoadSnapshotFile" style="width:100%; justify-content:center;">Load odds-snapshot.json…</button>
+        <button type="button" class="btn primary sm" id="btnLoadSnapshotFile" style="width:100%; justify-content:center;">Load bets.json…</button>
         <input type="file" id="snapshotFile" accept="application/json" style="display:none">
-        <div id="oddsMeta" class="odds-loading" style="margin-top:8px;">Download odds-snapshot.json from your GitHub repo (it's updated automatically every 30 min), then load it here.</div>
+        <div id="oddsMeta" class="odds-loading" style="margin-top:8px;">Download bets.json from your GitHub repo (it's refreshed automatically every 10 min), then load it here to pull in opening/live/closing prices for any bet you're tracking.</div>
         <div id="oddsWatchlist"></div>
         <div id="oddsResults"></div>
       </div>
@@ -445,7 +445,7 @@ footer{margin-top:40px; padding-top:16px; border-top:1px solid var(--border); fo
     </div>
     <div class="field-row">
       <div class="field">
-        <label>Opening odds <span class="help">optional</span></label>
+        <label>Opening odds <span class="help">optional — auto-fills once tracked</span></label>
         <input id="fieldOpen" type="number" placeholder="-110">
       </div>
       <div class="field">
@@ -454,7 +454,7 @@ footer{margin-top:40px; padding-top:16px; border-top:1px solid var(--border); fo
       </div>
     </div>
     <div class="field">
-      <label>Closing odds <span class="help">fill in once the line closes</span></label>
+      <label>Closing odds <span class="help">auto-fills once tracked, or fill in by hand</span></label>
       <input id="fieldClose" type="number" placeholder="-120">
     </div>
     <div class="field-row">
@@ -670,10 +670,12 @@ function passesFilters(bet, f){
 
 /* ---------- computed fields per bet ---------- */
 function enrich(bet){
-  var clv = calcCLV(bet.oddsTaken, bet.oddsClose);
-  var ev = calcEV(bet.stake, bet.oddsTaken, bet.oddsClose);
+  var provisional = bet.oddsClose==null && bet.liveOdds!=null;
+  var compareOdds = bet.oddsClose!=null ? bet.oddsClose : bet.liveOdds;
+  var clv = calcCLV(bet.oddsTaken, compareOdds);
+  var ev = calcEV(bet.stake, bet.oddsTaken, compareOdds);
   var pl = settledPL(bet);
-  return Object.assign({}, bet, {clv:clv, ev:ev, pl:pl});
+  return Object.assign({}, bet, {clv:clv, ev:ev, pl:pl, provisional:provisional});
 }
 
 /* ---------- rendering ---------- */
@@ -865,11 +867,11 @@ function renderLedger(bets){
       '<td class="mono" style="color:var(--fg-faint); font-size:11.5px;">'+dateStr+'</td>'+
       '<td>'+b.sport+'</td>'+
       '<td>'+b.type+'</td>'+
-      '<td style="max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="'+(b.selection||"")+'">'+(b.selection||"—")+(b.example?'<span class="example-tag">ex</span>':'')+'</td>'+
+      '<td style="max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="'+(b.selection||"")+'">'+(b.selection||"—")+(b.example?'<span class="example-tag">ex</span>':'')+(b.tracked?'<span class="example-tag" title="'+(b.trackError||"")+'">'+(b.trackStatus==="closed"?"closed":"tracking")+'</span>':'')+'</td>'+
       '<td class="num">'+fmtMoney(Number(b.stake))+'</td>'+
       '<td class="num">'+fmtOdds(b.oddsTaken)+'</td>'+
-      '<td class="num '+plClass(b.clv)+'">'+fmtPct(b.clv)+'</td>'+
-      '<td class="num '+plClass(b.ev)+'">'+fmtMoney(b.ev)+'</td>'+
+      '<td class="num '+plClass(b.clv)+'">'+(b.provisional?"~":"")+fmtPct(b.clv)+'</td>'+
+      '<td class="num '+plClass(b.ev)+'">'+(b.provisional?"~":"")+fmtMoney(b.ev)+'</td>'+
       '<td>'+badgeHtml(b.status)+'</td>'+
       '<td class="num '+plClass(b.pl)+'">'+(b.pl==null?"—":fmtMoney(b.pl))+'</td>'+
       '<td><div class="row-actions"><button class="btn ghost sm" data-edit="'+b.id+'">Edit</button></div></td>'+
@@ -886,11 +888,11 @@ function renderLedger(bets){
       '<div class="lcard-del" data-del="'+b.id+'">Delete</div>'+
       '<div class="lcard-face" data-edit="'+b.id+'">'+
         '<div class="lcard-top"><span class="lcard-meta">'+b.sport+' · '+b.type+'</span>'+badgeHtml(b.status)+'</div>'+
-        '<div class="lcard-sel">'+(b.selection||"—")+(b.example?'<span class="example-tag">ex</span>':'')+'</div>'+
+        '<div class="lcard-sel">'+(b.selection||"—")+(b.example?'<span class="example-tag">ex</span>':'')+(b.tracked?'<span class="example-tag">'+(b.trackStatus==="closed"?"closed":"tracking")+'</span>':'')+'</div>'+
         '<div class="lcard-stats">'+
           '<div><span>Stake</span><b>'+fmtMoney(Number(b.stake))+'</b></div>'+
-          '<div><span>CLV</span><b class="'+plClass(b.clv)+'">'+fmtPct(b.clv)+'</b></div>'+
-          '<div><span>EV</span><b class="'+plClass(b.ev)+'">'+fmtMoney(b.ev)+'</b></div>'+
+          '<div><span>CLV</span><b class="'+plClass(b.clv)+'">'+(b.provisional?"~":"")+fmtPct(b.clv)+'</b></div>'+
+          '<div><span>EV</span><b class="'+plClass(b.ev)+'">'+(b.provisional?"~":"")+fmtMoney(b.ev)+'</b></div>'+
           '<div><span>P/L</span><b class="'+plClass(b.pl)+'">'+(b.pl==null?"—":fmtMoney(b.pl))+'</b></div>'+
         '</div>'+
         '<div class="lcard-date">'+dateStr+'</div>'+
@@ -968,6 +970,7 @@ function populateFilterSelects(){
 var editingId = null;
 function openDrawer(id){
   editingId = id || null;
+  pendingTrackId = null;
   var bet = id ? state.bets.find(function(b){return b.id===id;}) : null;
   document.getElementById("drawerTitle").textContent = bet ? "Edit Bet" : "Log a Bet";
   document.getElementById("pasteArea").style.display = "none";
@@ -1141,8 +1144,9 @@ function parsePropShorthand(text){
   }
   return null;
 }
-function propWatchlistSnippet(prop, book, odds){
+function trackedBetSnippet(prop, book, odds, id){
   var obj = {
+    id: id,
     label: prop.player+" "+prop.stat+(prop.side?" "+prop.side+" "+prop.line:"")+" ("+(book||"book TBD")+(odds!=null?" @ "+fmtOdds(odds):"")+")",
     type: "player_prop",
     sport: prop.sportHint || "(set sport)",
@@ -1151,11 +1155,17 @@ function propWatchlistSnippet(prop, book, odds){
     side: prop.side || "",
     line: prop.line || "",
     placedBook: book || "",
-    placedOdds: odds!=null ? odds : "",
-    sharpBooks: SHARP_BOOKS
+    wageredOdds: odds!=null ? odds : "",
+    sharpBooks: SHARP_BOOKS,
+    status: "tracking",
+    openingOdds: null,
+    liveOdds: null,
+    closingOdds: null
   };
   return JSON.stringify(obj, null, 2);
 }
+function newTrackId(){ return "t"+Date.now()+Math.random().toString(36).slice(2,7); }
+var pendingTrackId = null;
 
 document.getElementById("btnTogglePaste").addEventListener("click", function(){
   var area = document.getElementById("pasteArea");
@@ -1167,6 +1177,7 @@ document.getElementById("btnCancelPaste").addEventListener("click", function(){
   document.getElementById("pasteArea").style.display = "none";
   document.getElementById("pasteText").value = "";
   document.getElementById("pasteResult").classList.remove("show");
+  pendingTrackId = null;
 });
 document.getElementById("btnParsePaste").addEventListener("click", function(){
   var raw = document.getElementById("pasteText").value;
@@ -1196,14 +1207,15 @@ document.getElementById("btnParsePaste").addEventListener("click", function(){
     return '<span class="paste-chip'+(c.hit?'':' miss')+'">'+(c.hit?c.label:c.label+" — not found")+'</span>';
   }).join("")+'</div><div style="margin-top:6px;">Double-check the fields below before saving — parsing is a best guess.</div>';
   if(prop){
-    var snippet = propWatchlistSnippet(prop, parsed.book, parsed.oddsTaken);
+    pendingTrackId = pendingTrackId || newTrackId();
+    var snippet = trackedBetSnippet(prop, parsed.book, parsed.oddsTaken, pendingTrackId);
     html += '<div style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--border-strong);">'+
-      '<div style="font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--fg-muted); margin-bottom:5px;">Track this prop\'s EV (sharp books: '+SHARP_BOOKS.join(", ")+')</div>'+
-      '<textarea readonly style="min-height:120px; font-family:var(--font-mono); font-size:11px; width:100%;">'+snippet.replace(/</g,"&lt;")+'</textarea>'+
+      '<div style="font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--fg-muted); margin-bottom:5px;">Track this bet\'s price (sharp books: '+SHARP_BOOKS.join(", ")+')</div>'+
+      '<textarea readonly style="min-height:130px; font-family:var(--font-mono); font-size:11px; width:100%;">'+snippet.replace(/</g,"&lt;")+'</textarea>'+
       '<div style="display:flex; gap:8px; margin-top:6px;">'+
       '<button type="button" class="btn sm primary" id="btnCopyPropSnippet">Copy snippet</button>'+
       '</div>'+
-      '<div style="font-size:11px; color:var(--fg-faint); margin-top:5px;">Paste this into the <code>entries</code> array in watchlist.json on GitHub (fix "sport" if needed), then run or wait for the Update Odds workflow — it\'ll track this prop\'s price across those books from then on.</div>'+
+      '<div style="font-size:11px; color:var(--fg-faint); margin-top:5px;">Paste this into the <code>bets</code> array in bets.json on GitHub (fix "sport" if needed). Once it\'s tracking, save this bet below (same id) — opening price, live price, and the closing line will sync in automatically every 10 minutes until kickoff.</div>'+
       '</div>';
     result.innerHTML = html;
     document.getElementById("btnCopyPropSnippet").addEventListener("click", function(){
@@ -1214,17 +1226,18 @@ document.getElementById("btnParsePaste").addEventListener("click", function(){
       }catch(e){ toast("Press Cmd/Ctrl+C to copy the selected text."); }
     });
   } else {
+    pendingTrackId = null;
     result.innerHTML = html;
   }
   result.classList.add("show");
 });
 
-/* ---------- odds snapshot (built by the "Update Odds" GitHub Action, read as a static file) ---------- */
+/* ---------- bet tracking sync (bets.json is built by the "Update Odds" GitHub Action, read as a static file) ---------- */
 document.getElementById("btnToggleOdds").addEventListener("click", function(){
   var area = document.getElementById("oddsArea");
   var open = area.style.display !== "none";
   area.style.display = open ? "none" : "block";
-  if(!open) tryFetchSnapshot();
+  if(!open) tryFetchBetsFile();
 });
 document.getElementById("btnLoadSnapshotFile").addEventListener("click", function(){
   document.getElementById("snapshotFile").click();
@@ -1234,67 +1247,68 @@ document.getElementById("snapshotFile").addEventListener("change", function(e){
   if(!file) return;
   var reader = new FileReader();
   reader.onload = function(){
-    try{ renderSnapshot(JSON.parse(reader.result)); }
+    try{ syncTrackedBets(JSON.parse(reader.result)); }
     catch(err){
       var meta = document.getElementById("oddsMeta");
       meta.className = "odds-error";
-      meta.textContent = "That file doesn't look like a valid odds-snapshot.json — "+err.message;
+      meta.textContent = "That file doesn't look like a valid bets.json — "+err.message;
     }
   };
   reader.readAsText(file);
   e.target.value = "";
 });
-function tryFetchSnapshot(){
+function tryFetchBetsFile(){
   // Works when this page is served over http(s) (e.g. GitHub Pages); most browsers block
   // fetch() of a sibling file when the page is opened directly as a local file:// page,
-  // so that case silently falls back to the "Load odds-snapshot.json…" file picker above.
-  fetch("odds-snapshot.json", {cache:"no-store"})
+  // so that case silently falls back to the "Load bets.json…" file picker above.
+  fetch("bets.json", {cache:"no-store"})
     .then(function(r){ if(!r.ok) throw new Error("status "+r.status); return r.json(); })
-    .then(renderSnapshot)
+    .then(syncTrackedBets)
     .catch(function(){ /* expected when running as a local file — use the file picker instead */ });
 }
-function renderSnapshot(data){
+// Picks the price for the bet's own placed book when the tracker has it, else the first
+// book it captured — a reasonable stand-in so CLV still has a number to compare against.
+function pickPrice(oddsArr, book){
+  if(!oddsArr || !oddsArr.length) return null;
+  var hit = book ? oddsArr.find(function(o){ return o.sportsbook===book; }) : null;
+  return (hit || oddsArr[0]).price;
+}
+function syncTrackedBets(data){
   var meta = document.getElementById("oddsMeta");
   var list = document.getElementById("oddsWatchlist");
-  var results = document.getElementById("oddsResults");
-  results.innerHTML = "";
-  var when = data.generatedAt ? new Date(data.generatedAt).toLocaleString() : "unknown";
+  document.getElementById("oddsResults").innerHTML = "";
+  var when = data.updatedAt ? new Date(data.updatedAt).toLocaleString() : "unknown";
+  var tracked = data.bets || [];
+  if(!tracked.length){
+    meta.className = "odds-loading";
+    meta.textContent = "bets.json has no tracked bets yet — track one from the box above, add it on GitHub, then re-run the Update Odds workflow.";
+    list.innerHTML = "";
+    return;
+  }
+  var synced = 0;
+  tracked.forEach(function(t){
+    var idx = state.bets.findIndex(function(b){ return b.id===t.id; });
+    if(idx===-1) return;
+    var b = state.bets[idx];
+    b.tracked = true;
+    b.trackStatus = t.status || "tracking";
+    b.trackError = t.lastError || null;
+    if(b.oddsOpen==null && t.openingOdds) b.oddsOpen = pickPrice(t.openingOdds, b.book);
+    if(t.liveOdds) b.liveOdds = pickPrice(t.liveOdds, b.book);
+    if(t.status==="closed" && t.closingOdds) b.oddsClose = pickPrice(t.closingOdds, b.book);
+    synced++;
+  });
+  if(synced){ saveBets(state.bets); renderAll(); }
   meta.className = "odds-loading";
-  meta.textContent = "Snapshot last updated: "+when+" · edit watchlist.json in GitHub to track a different game, then run the Update Odds workflow.";
-  var entries = data.entries || [];
-  if(!entries.length){ list.innerHTML = '<div class="odds-loading">watchlist.json is empty — add a game there and re-run the workflow.</div>'; return; }
-  list.innerHTML = '<div class="odds-fixture-list">'+entries.map(function(e,i){
-    var sub = e.error ? e.error : (e.game||"")+(e.start?" · "+new Date(e.start).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"");
-    return '<button type="button" class="odds-fixture" data-i="'+i+'"><div class="t">'+e.label+'</div><div class="d">'+sub+'</div></button>';
+  meta.textContent = "bets.json last updated: "+when+" · synced "+synced+" of "+tracked.length+" tracked bet(s) into your ledger.";
+  list.innerHTML = '<div class="odds-fixture-list">'+tracked.map(function(t){
+    var statusLabel = t.status==="closed" ? "Closed" : (t.lastError ? "Tracking (waiting)" : "Tracking");
+    var openP = t.openingOdds ? fmtOdds(pickPrice(t.openingOdds)) : "—";
+    var liveP = t.liveOdds ? fmtOdds(pickPrice(t.liveOdds)) : "—";
+    var closeP = t.closingOdds ? fmtOdds(pickPrice(t.closingOdds)) : "—";
+    var sub = t.lastError ? t.lastError : ("Open "+openP+" · Live "+liveP+" · Close "+closeP);
+    return '<div class="odds-fixture" style="cursor:default;"><div class="t">'+t.label+' <span style="color:var(--fg-faint); font-weight:400;">— '+statusLabel+'</span></div><div class="d">'+sub+'</div></div>';
   }).join("")+'</div>';
-  list.querySelectorAll(".odds-fixture").forEach(function(btn){
-    btn.addEventListener("click", function(){ showEntryOdds(entries[Number(btn.getAttribute("data-i"))]); });
-  });
-}
-function showEntryOdds(entry){
-  var resultsEl = document.getElementById("oddsResults");
-  if(entry.error){ resultsEl.innerHTML = '<div class="odds-error">'+entry.error+'</div>'; return; }
-  var odds = entry.odds || [];
-  if(!odds.length){ resultsEl.innerHTML = '<div class="odds-loading">No odds in the snapshot for this game yet.</div>'; return; }
-  resultsEl.innerHTML = odds.slice(0,20).map(function(o,i){
-    var label = o.market + (o.points!=null ? " "+o.points : "") + " — " + o.selection;
-    return '<div class="odds-row">'+
-      '<div class="m"><span>'+o.sportsbook+' · '+o.market+'</span><b>'+label+'</b></div>'+
-      '<button type="button" class="odds-fill-btn" data-i="'+i+'" data-target="fieldOpen">Open</button>'+
-      '<button type="button" class="odds-fill-btn" data-i="'+i+'" data-target="fieldTaken">Taken</button>'+
-      '<button type="button" class="odds-fill-btn" data-i="'+i+'" data-target="fieldClose">Close</button>'+
-      '</div>';
-  }).join("");
-  resultsEl.querySelectorAll(".odds-fill-btn").forEach(function(btn){
-    btn.addEventListener("click", function(){
-      var o = odds[Number(btn.getAttribute("data-i"))];
-      var targetId = btn.getAttribute("data-target");
-      document.getElementById(targetId).value = o.price;
-      if(!document.getElementById("fieldBook").value) document.getElementById("fieldBook").value = o.sportsbook;
-      updateLiveCalc();
-      toast("Filled "+(targetId==="fieldOpen"?"opening":targetId==="fieldTaken"?"odds at wager":"closing")+" odds: "+fmtOdds(o.price));
-    });
-  });
 }
 
 function saveBetFromForm(){
@@ -1302,8 +1316,9 @@ function saveBetFromForm(){
   var taken = document.getElementById("fieldTaken").value;
   if(!taken || isNaN(Number(taken))){ toast("Enter odds at wager."); return; }
   if(!stake || stake<=0){ toast("Enter a stake greater than 0."); return; }
+  var existing = editingId ? state.bets.find(function(b){return b.id===editingId;}) : null;
   var bet = {
-    id: editingId || ("b"+Date.now()+Math.random().toString(36).slice(2,7)),
+    id: editingId || pendingTrackId || ("b"+Date.now()+Math.random().toString(36).slice(2,7)),
     sport: document.getElementById("fieldSport").value,
     type: document.getElementById("fieldType").value,
     selection: document.getElementById("fieldSelection").value.trim(),
@@ -1316,19 +1331,22 @@ function saveBetFromForm(){
     status: document.getElementById("fieldStatus").value,
     payout: document.getElementById("fieldPayout").value!=="" ? Number(document.getElementById("fieldPayout").value) : null,
     notes: document.getElementById("fieldNotes").value.trim(),
-    example: false
+    example: false,
+    tracked: existing ? !!existing.tracked : (!editingId && !!pendingTrackId),
+    trackStatus: existing ? existing.trackStatus : null,
+    liveOdds: existing ? existing.liveOdds : null
   };
   if(editingId){
     var idx = state.bets.findIndex(function(b){return b.id===editingId;});
-    // preserve example flag only if untouched; editing a real save clears it
     state.bets[idx] = bet;
   } else {
     state.bets.push(bet);
   }
   saveBets(state.bets);
+  pendingTrackId = null;
   closeDrawer();
   renderAll();
-  toast(editingId ? "Bet updated." : "Bet logged.");
+  toast(editingId ? "Bet updated." : (bet.tracked ? "Bet logged — tracking its price automatically." : "Bet logged."));
 }
 
 /* ---------- confirm modal ---------- */
