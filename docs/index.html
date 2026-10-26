@@ -414,7 +414,9 @@ footer{margin-top:40px; padding-top:16px; border-top:1px solid var(--border); fo
     <div class="odds-box" id="oddsBox">
       <button type="button" class="btn ghost sm" id="btnToggleOdds" style="width:100%; justify-content:center;">Look up odds (OddsJam snapshot)</button>
       <div id="oddsArea" style="display:none; margin-top:8px;">
-        <div id="oddsMeta" class="odds-loading">Loading snapshot…</div>
+        <button type="button" class="btn primary sm" id="btnLoadSnapshotFile" style="width:100%; justify-content:center;">Load odds-snapshot.json…</button>
+        <input type="file" id="snapshotFile" accept="application/json" style="display:none">
+        <div id="oddsMeta" class="odds-loading" style="margin-top:8px;">Download odds-snapshot.json from your GitHub repo (it's updated automatically every 30 min), then load it here.</div>
         <div id="oddsWatchlist"></div>
         <div id="oddsResults"></div>
       </div>
@@ -1132,37 +1134,52 @@ document.getElementById("btnToggleOdds").addEventListener("click", function(){
   var area = document.getElementById("oddsArea");
   var open = area.style.display !== "none";
   area.style.display = open ? "none" : "block";
-  if(!open) loadSnapshot();
+  if(!open) tryFetchSnapshot();
 });
-function loadSnapshot(){
+document.getElementById("btnLoadSnapshotFile").addEventListener("click", function(){
+  document.getElementById("snapshotFile").click();
+});
+document.getElementById("snapshotFile").addEventListener("change", function(e){
+  var file = e.target.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(){
+    try{ renderSnapshot(JSON.parse(reader.result)); }
+    catch(err){
+      var meta = document.getElementById("oddsMeta");
+      meta.className = "odds-error";
+      meta.textContent = "That file doesn't look like a valid odds-snapshot.json — "+err.message;
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = "";
+});
+function tryFetchSnapshot(){
+  // Works when this page is served over http(s) (e.g. GitHub Pages); most browsers block
+  // fetch() of a sibling file when the page is opened directly as a local file:// page,
+  // so that case silently falls back to the "Load odds-snapshot.json…" file picker above.
+  fetch("odds-snapshot.json", {cache:"no-store"})
+    .then(function(r){ if(!r.ok) throw new Error("status "+r.status); return r.json(); })
+    .then(renderSnapshot)
+    .catch(function(){ /* expected when running as a local file — use the file picker instead */ });
+}
+function renderSnapshot(data){
   var meta = document.getElementById("oddsMeta");
   var list = document.getElementById("oddsWatchlist");
   var results = document.getElementById("oddsResults");
   results.innerHTML = "";
-  meta.textContent = "Loading snapshot…";
+  var when = data.generatedAt ? new Date(data.generatedAt).toLocaleString() : "unknown";
   meta.className = "odds-loading";
-  list.innerHTML = "";
-  fetch("odds-snapshot.json", {cache:"no-store"})
-    .then(function(r){ if(!r.ok) throw new Error("snapshot not found yet (status "+r.status+")"); return r.json(); })
-    .then(function(data){
-      var when = data.generatedAt ? new Date(data.generatedAt).toLocaleString() : "unknown";
-      meta.className = "odds-loading";
-      meta.textContent = "Snapshot last updated: "+when+" · edit watchlist.json in GitHub to track a different game, then run the Update Odds workflow.";
-      var entries = data.entries || [];
-      if(!entries.length){ list.innerHTML = '<div class="odds-loading">watchlist.json is empty — add a game there and re-run the workflow.</div>'; return; }
-      list.innerHTML = '<div class="odds-fixture-list">'+entries.map(function(e,i){
-        var sub = e.error ? e.error : (e.game||"")+(e.start?" · "+new Date(e.start).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"");
-        return '<button type="button" class="odds-fixture" data-i="'+i+'"><div class="t">'+e.label+'</div><div class="d">'+sub+'</div></button>';
-      }).join("")+'</div>';
-      list.querySelectorAll(".odds-fixture").forEach(function(btn){
-        btn.addEventListener("click", function(){ showEntryOdds(entries[Number(btn.getAttribute("data-i"))]); });
-      });
-    })
-    .catch(function(err){
-      meta.className = "odds-error";
-      meta.textContent = "Couldn't load odds-snapshot.json — "+err.message+". It's created the first time the Update Odds workflow runs.";
-      list.innerHTML = "";
-    });
+  meta.textContent = "Snapshot last updated: "+when+" · edit watchlist.json in GitHub to track a different game, then run the Update Odds workflow.";
+  var entries = data.entries || [];
+  if(!entries.length){ list.innerHTML = '<div class="odds-loading">watchlist.json is empty — add a game there and re-run the workflow.</div>'; return; }
+  list.innerHTML = '<div class="odds-fixture-list">'+entries.map(function(e,i){
+    var sub = e.error ? e.error : (e.game||"")+(e.start?" · "+new Date(e.start).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"");
+    return '<button type="button" class="odds-fixture" data-i="'+i+'"><div class="t">'+e.label+'</div><div class="d">'+sub+'</div></button>';
+  }).join("")+'</div>';
+  list.querySelectorAll(".odds-fixture").forEach(function(btn){
+    btn.addEventListener("click", function(){ showEntryOdds(entries[Number(btn.getAttribute("data-i"))]); });
+  });
 }
 function showEntryOdds(entry){
   var resultsEl = document.getElementById("oddsResults");
