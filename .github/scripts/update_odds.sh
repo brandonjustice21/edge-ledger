@@ -172,7 +172,16 @@ process_player_prop_entry() {
   echo "Searching $op_league_upper players for \"$player\"..." >&2
   pid=""; pname=""
   for page in $(seq 1 "$PLAYER_SEARCH_PAGES"); do
-    curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/players?league=$op_league_upper&page=$page" > "$TMP/players.json" || echo '{}' > "$TMP/players.json"
+    if [ "$page" = "1" ]; then
+      # Extra diagnostics on the first page only: the raw body and HTTP status tell us
+      # definitively whether the league code is wrong, the request is malformed, or the
+      # league genuinely has zero players returned — rather than guessing again.
+      http_status=$(curl -sS -o "$TMP/players.json" -w '%{http_code}' -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/players?league=$op_league_upper&page=$page" || echo "000")
+      echo "  [debug] GET /players?league=$op_league_upper&page=1 -> HTTP $http_status" >&2
+      echo "  [debug] body (first 500 chars): $(head -c 500 "$TMP/players.json")" >&2
+    else
+      curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/players?league=$op_league_upper&page=$page" > "$TMP/players.json" || echo '{}' > "$TMP/players.json"
+    fi
     echo "  page $page: $(jq -r '(.data // []) | length' "$TMP/players.json" 2>/dev/null || echo '?') players returned, has_more=$(jq -r '.has_more // "?"' "$TMP/players.json" 2>/dev/null)" >&2
     found=$(jq -c --arg name "$player" '
       (.data // []) | map(select(
