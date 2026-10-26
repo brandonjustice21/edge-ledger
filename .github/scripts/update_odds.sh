@@ -190,19 +190,47 @@ fetch_player_odds() {
   done
   jq -s '{data: (map(.data // []) | add // [])}' "$TMP/odds_parts.jsonl" > "$TMP/odds_raw.json" 2>/dev/null || echo '{"data":[]}' > "$TMP/odds_raw.json"
 
-  local kw_pattern name_kw
+  local kw_pattern name_kw exact_market nbooks
   kw_pattern=$(market_keywords "$market")
   # .selection is the BARE player name ("Tanner McKee"); .name is the full "Player
   # Over/Under Line" string. Match the player's last name against .selection
   # specifically (not .name, which would also match on every other word) to avoid
   # false hits.
   name_kw=$(echo "$pname" | awk '{print $NF}')
-  jq -c --argjson cap "$MAX_ODDS_PER_GAME" --arg kw "$kw_pattern" --arg nm "$name_kw" '
+  exact_market=$(echo "player $market" | tr '[:upper:]' '[:lower:]')
+  nbooks=$(echo "$sharp_books" | jq 'length')
+
+  # Real market names follow a "Player <Stat>" convention for the full-game line, with
+  # period/combo/alternate variants layered on top ("1st Half Player Passing Yards",
+  # "Player Passing Yards (Combo)", "...H2H Spread", etc.) that also match the plain
+  # keyword search — and each book posts a long tail of alternate point values for the
+  # same market besides. Prefer the exact market name + is_main (the one line a book is
+  # actually advertising); fall back to progressively looser matches, then collapse any
+  # remaining alternate-line flood down to one per book/side closest to the pack's
+  # midpoint — confirmed against real sample data (see search.js, same logic).
+  jq -c --argjson cap "$MAX_ODDS_PER_GAME" --argjson nbooks "$nbooks" --arg kw "$kw_pattern" --arg nm "$name_kw" --arg exact "$exact_market" '
     [ (.data // [])[] | (.odds // [])[]
-      | select(.market as $m | ($m // "" | test($kw; "i")))
       | select((.selection // "") | test($nm; "i"))
-      | {sportsbook, market, selection: (if (.name // "") == "" then (.selection // "") else .name end), price, points}
-    ] | sort_by(.sportsbook) | .[0:$cap]
+      | {market: (.market // ""), price, points, is_main: (.is_main // false), sportsbook,
+         selection: (if (.name // "") == "" then (.selection // "") else .name end)} ] as $all
+    | ($all | map(select((.market|ascii_downcase)==$exact and .is_main==true))) as $m1
+    | ($all | map(select((.market|ascii_downcase)==$exact))) as $m2
+    | ($all | map(select((.market|test($kw; "i")) and .is_main==true))) as $m3
+    | ($all | map(select(.market|test($kw; "i")))) as $m4
+    | (if ($m1|length)>0 then $m1 elif ($m2|length)>0 then $m2 elif ($m3|length)>0 then $m3 else $m4 end) as $matched
+    | (if ($matched|length) > ($nbooks*2) then
+        $matched
+        | group_by([.sportsbook, (if (.selection|test("under";"i")) then "Under" elif (.selection|test("over";"i")) then "Over" else "?" end)])
+        | map(
+            . as $g
+            | ($g | map(.points) | map(select(.!=null))) as $pts
+            | if ($pts|length)==0 then $g[0]
+              else ($pts | add / length) as $mid | $g | min_by(((.points - $mid) * (.points - $mid)))
+              end
+          )
+      else $matched end)
+    | map({sportsbook, market, selection, price, points})
+    | sort_by(.sportsbook) | .[0:$cap]
   ' "$TMP/odds_raw.json" > "$TMP/odds.json" 2>/dev/null || echo "[]" > "$TMP/odds.json"
 }
 
