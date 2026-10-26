@@ -100,7 +100,7 @@ for i in $(seq 0 $((count - 1))); do
     [ (.data // [])[] | (.odds // [])[]
       | select(.is_main == true)
       | select(.market as $m | ["Moneyline","Point Spread","Spread","Total Points","Total","Game Total"] | index($m))
-      | {sportsbook, market, selection, price, points}
+      | {sportsbook, market, selection: (if (.selection // "") == "" then (.name // "") else .selection end), price, points}
     ] | .[0:$cap]
   ' "$TMP/odds_raw.json" > "$TMP/odds.json" 2>/dev/null || echo "[]" > "$TMP/odds.json"
 
