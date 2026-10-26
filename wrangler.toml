@@ -1,0 +1,7 @@
+name = "edge-ledger"
+main = "worker.js"
+compatibility_date = "2024-09-23"
+
+# Don't put the real key here — add it as an encrypted secret instead:
+#   wrangler secret put ODDSJAM_API_KEY
+# or in the dashboard: Worker > Settings > Variables and Secrets > Add secret.
