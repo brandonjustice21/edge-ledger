@@ -163,24 +163,19 @@ process_player_prop_entry() {
     return
   fi
 
-  # The /players endpoint's docs example uses an UPPERCASE league code (league=NFL),
-  # unlike /fixtures/active which confirmed working with lowercase (league=nfl) — try
-  # uppercase here since this is the one endpoint that's never been tested live.
-  local op_league_upper
-  op_league_upper=$(echo "$op_league" | tr '[:lower:]' '[:upper:]')
-
-  echo "Searching $op_league_upper players for \"$player\"..." >&2
+  # Round 1 proved "NBA" (uppercase) returns a perfectly valid, empty response
+  # ({"data":[],"has_more":false}) — HTTP 200, not an error, just the wrong league code.
+  # Revert to lowercase (confirmed working for /fixtures/active with NFL). If this is
+  # STILL empty, dump /leagues so the real id shows up in the log instead of guessing again.
+  echo "Searching $op_league players for \"$player\"..." >&2
   pid=""; pname=""
   for page in $(seq 1 "$PLAYER_SEARCH_PAGES"); do
     if [ "$page" = "1" ]; then
-      # Extra diagnostics on the first page only: the raw body and HTTP status tell us
-      # definitively whether the league code is wrong, the request is malformed, or the
-      # league genuinely has zero players returned — rather than guessing again.
-      http_status=$(curl -sS -o "$TMP/players.json" -w '%{http_code}' -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/players?league=$op_league_upper&page=$page" || echo "000")
-      echo "  [debug] GET /players?league=$op_league_upper&page=1 -> HTTP $http_status" >&2
+      http_status=$(curl -sS -o "$TMP/players.json" -w '%{http_code}' -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/players?league=$op_league&page=$page" || echo "000")
+      echo "  [debug] GET /players?league=$op_league&page=1 -> HTTP $http_status" >&2
       echo "  [debug] body (first 500 chars): $(head -c 500 "$TMP/players.json")" >&2
     else
-      curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/players?league=$op_league_upper&page=$page" > "$TMP/players.json" || echo '{}' > "$TMP/players.json"
+      curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/players?league=$op_league&page=$page" > "$TMP/players.json" || echo '{}' > "$TMP/players.json"
     fi
     echo "  page $page: $(jq -r '(.data // []) | length' "$TMP/players.json" 2>/dev/null || echo '?') players returned, has_more=$(jq -r '.has_more // "?"' "$TMP/players.json" 2>/dev/null)" >&2
     found=$(jq -c --arg name "$player" '
@@ -196,6 +191,12 @@ process_player_prop_entry() {
     has_more=$(jq -r '.has_more // false' "$TMP/players.json" 2>/dev/null || echo "false")
     [ "$has_more" != "true" ] && break
   done
+
+  if [ -z "$pid" ]; then
+    echo "  [debug] still no match — dumping /leagues?sport=$op_sport to find the real league id:" >&2
+    curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/leagues?sport=$op_sport" 2>/dev/null | head -c 1000 >&2
+    echo >&2
+  fi
 
   if [ -z "$pid" ]; then
     jq -n --arg label "$label" --arg error "No $op_league player matched \"$player\" in the first $PLAYER_SEARCH_PAGES pages. Check spelling, or that \"sport\" in watchlist.json is this player's real league." \
