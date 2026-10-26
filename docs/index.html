@@ -1033,9 +1033,8 @@ function parseBetPaste(raw){
   var lines = text.split("\n").map(function(l){return l.trim();}).filter(Boolean);
   var out = {};
 
-  var books = ["DraftKings","FanDuel","BetMGM","Caesars","ESPN BET","Fanatics","bet365","PointsBet","BetRivers","Hard Rock Bet","Novig","Kalshi","Pinnacle","Circa Sports","Circa"];
-  for(var i=0;i<books.length;i++){
-    if(text.toLowerCase().indexOf(books[i].toLowerCase())!==-1){ out.book = books[i]; break; }
+  for(var i=0;i<ALL_SPORTSBOOKS.length;i++){
+    if(bookRegex(ALL_SPORTSBOOKS[i]).test(text)){ out.book = ALL_SPORTSBOOKS[i]; break; }
   }
 
   var sportMap = [
@@ -1099,6 +1098,56 @@ function parseBetPaste(raw){
 
 /* ---------- player-prop shorthand, e.g. "brunson assists over 6.5 at draftkings +150" ---------- */
 var SHARP_BOOKS = ["DraftKings","FanDuel","Novig","Kalshi","Pinnacle","Circa Sports"];
+/* Every sportsbook, prop-pick app, exchange, and prediction market OddsJam/OpticOdds
+   tracks (fetched live from /sportsbooks), for recognizing the book in pasted bet-slip
+   text. The handful of common hand-picked names stay first for priority; the full
+   roster is appended after, deduped against those. This is purely for free-text
+   recognition/autofill — it has no effect on SHARP_BOOKS, which stays a deliberately
+   narrow set for fair closing-line EV math.
+   A handful of real OddsJam books (Stake, Sharp, Overtime, Rivalry, Duel, Heritage,
+   Boomers, BookMaker, Sleeper, Props Builder) are deliberately left out here — each is
+   also ordinary betting/sports vocabulary, confirmed by testing to misfire on normal
+   text that never mentions that book (e.g. "$50 stake" or "sharp money" wrongly set the
+   book to "Stake"/"Sharp"). Narrower or always-compound names (e.g. "Underdog Fantasy",
+   "HotStreak") don't have this problem and are kept. */
+var ALL_SPORTSBOOKS = ["DraftKings","FanDuel","BetMGM","Caesars","ESPN BET","Fanatics","bet365","PointsBet","BetRivers","Hard Rock Bet","Novig","Kalshi","Pinnacle","Circa Sports","Circa"].concat([
+  "1XBet","20bet","22bet","4Cx","888sport","ATG","BC.GAME","BET99","Bally Bet","Batery","Bet Right",
+  "BetAmapola","BetAnything","BetCorrect","BetDEX","BetDSI","BetDeluxe","BetGRW","BetMGM (UK)","BetMania",
+  "BetNation","BetNation (Australia)","BetNow","BetOnline","BetOpenly","BetRivers (New York)","BetUS",
+  "BetVictor","Betano","Betano (Argentina)","Betano (Chile)","Betano (Greece)","Betano (United Kingdom)",
+  "Betcris","Betfair","Betfair Exchange","Betfair Exchange (Australia)","Betfair Exchange (Australia) (Lay)",
+  "Betfair Exchange (Lay)","Betnacional","Betplay","Betr","Betr Picks","Betr Picks (All)",
+  "Betr Picks (BOOSTED)","Bets IO","Betsafe","Betsson","Betsson (Chile)","Betway","Betway (Alaska)",
+  "Blue Book","Bodog","Boom Fantasy (5 Pick Insured)","Borgata","Bovada",
+  "Boyle Sports","Bracco","Campeonbet","CampoBet","Casumo","Chalkboard","Circa Vegas","Codere","Coolbet",
+  "Coral","Courtside","Crab Sports","DAZN Bet","Dabble (3 or 5 Pick Multipliers)","Dabble (3 or 5 Pick)",
+  "Dabble (Australia)","Dafabet","Danske Spil","Desert Diamond","Dogg House","DraftKings (Pick 2)",
+  "DraftKings (Pick 3)","DraftKings (Pick 6 Multipliers)","DraftKings (Pick 6)","DraftKings Predictions",
+  "EPICK","EPICK 50/50","Elite Bet","Esportsbet","Estrela Bet","Eurobet","Everygame","FD Predicts",
+  "Fanatics Markets","FireKeepers","Fliff","Fliff Superstars","Fonbet","Four Winds","GGBet","Galera.bet",
+  "Gemini Exchange","Goldbet","Granawin","Hard Rock","HotStreak","Jackpot.bet","Jazz Sports",
+  "Jugabet (Argentina)","Jugabet (Chile)","JustBet","KTO","Ladbrokes","Ladbrokes (Australia)","LeoVegas",
+  "Limitless Exchange","Lottoland","LowVig","Lucky Casino","Marathonbet","Matchbook Exchange","Melbet",
+  "Midnite","Mise-o-jeu","MyBookie","Neds","Ninja Casino","NorthStar Bets","Onyx Odds","Opinion Labs",
+  "OpticOdds AI","OpticOdds AI DFS","Orbit Exchange","OwnersBox","OwnersBox (6 Pick Insured)",
+  "Ozoon","PMU","PS3838","PS4848","Paddy Power","Parimatch (Brazil)","Parimatch (India)","ParlayPlay",
+  "Parlaye","Picklebet","Play Alberta","Play Eagle","PlayNow","Playdoit","PointsBet (Australia)",
+  "PointsBet (Ontario)","Polymarket","Polymarket (USA)","Prime Sports","PrizePicks",
+  "PrizePicks (5 or 6 Pick Flex)","PrizePicks (Demons and Goblins)","Proline","Prophet X",
+  "Rebet","Rebet Props City","Rizk","Robinhood","RushBet","SABA Sports","SBOBET","STN Sports",
+  "SX Bet","Sharp.ag","Smarkets","SpinBet","Splash Sports","Sportbet","Sportingbet",
+  "Sports Interaction","Sportsbet","Sportsbetting.ag","Sporttrade","Sportzino","SugarHouse",
+  "SunBet","Supabets","Superbet","SurgeBet","Svenskaspel","TAB","TAB (New Zealand)","TABtouch",
+  "Tailgate Exchange","Team Mexico","Thrillzz","ThriveFantasy","Thunderpick","Tipsport","TonyBet",
+  "TwinSpires","Underdog Fantasy","Underdog Fantasy (2 Pick)","Underdog Fantasy (3 or 5 Pick)",
+  "Underdog Fantasy (4 Pick Flex)","Underdog Fantasy (Multipliers)","Underdog Predictions","Unibet",
+  "Unibet (Australia)","Unibet (Denmark)","Unibet (France)","Unibet (Sweden)","Unibet (United Kingdom)",
+  "Veikkaus","Wanna Parlay","Webull","William Hill","Winpot","World Sports Betting","YouWager","bet105",
+  "bet105.us","betJACK","betPARX","betr (Australia)","betwhale","bwin","crypto.com","iBet","partypoker",
+  "theScore"
+]);
+function escapeRegex(s){ return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+function bookRegex(name){ return new RegExp("\\b"+escapeRegex(name)+"\\b", "i"); }
 var STAT_KEYWORDS = [
   [/\bpoints?\s*\+\s*rebounds?\s*\+\s*assists?\b|\bpra\b/i, "Points + Rebounds + Assists", null],
   [/\bpoints?\s*\+\s*rebounds?\b|\bpr\b(?!\w)/i, "Points + Rebounds", null],
