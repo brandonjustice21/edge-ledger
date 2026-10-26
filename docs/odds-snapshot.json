@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-26T19:05:40Z",
+  "generatedAt": "2026-10-26T19:08:39Z",
   "entries": [
     {
       "label": "Example: Chiefs game",
@@ -8,10 +8,10 @@
       "odds": [
         {
           "sportsbook": "DraftKings",
-          "market": "Total Points",
-          "selection": "Over 41.5",
-          "price": -105,
-          "points": 41.5
+          "market": "Point Spread",
+          "selection": "Denver Broncos",
+          "price": -110,
+          "points": 1.5
         },
         {
           "sportsbook": "DraftKings",
@@ -22,17 +22,17 @@
         },
         {
           "sportsbook": "DraftKings",
-          "market": "Point Spread",
+          "market": "Moneyline",
           "selection": "Kansas City Chiefs",
-          "price": -110,
-          "points": -1.5
+          "price": -125,
+          "points": null
         },
         {
           "sportsbook": "DraftKings",
-          "market": "Point Spread",
-          "selection": "Denver Broncos",
-          "price": -110,
-          "points": 1.5
+          "market": "Total Points",
+          "selection": "Over 41.5",
+          "price": -105,
+          "points": 41.5
         },
         {
           "sportsbook": "DraftKings",
@@ -43,10 +43,10 @@
         },
         {
           "sportsbook": "DraftKings",
-          "market": "Moneyline",
+          "market": "Point Spread",
           "selection": "Kansas City Chiefs",
-          "price": -125,
-          "points": null
+          "price": -110,
+          "points": -1.5
         }
       ]
     },
@@ -56,7 +56,8 @@
     },
     {
       "label": "Mahomes Passing Yards Over 275.5 (FanDuel @ -110)",
-      "error": "No nfl player matched \"Mahomes\" across 800 players checked. Check spelling."
+      "game": "Patrick Mahomes — Passing Yards",
+      "odds": []
     }
   ]
 }
