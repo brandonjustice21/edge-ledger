@@ -1,0 +1,14 @@
+name: Explore Today (temporary)
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  explore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Explore today's games and markets
+        env:
+          ODDSJAM_API_KEY: ${{ secrets.ODDSJAM_API_KEY }}
+        run: bash .github/scripts/explore_today.sh
