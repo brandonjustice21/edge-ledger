@@ -1,4 +1,29 @@
 {
   "updatedAt": "2026-10-26T21:11:50Z",
-  "bets": []
+  "bets": [
+    {
+      "status": "tracking",
+      "openingOdds": null,
+      "liveOdds": null,
+      "closingOdds": null,
+      "id": "t1793055865965hesqe",
+      "label": "Prescott Passing Yards Over 263.5 (DraftKings @ -113)",
+      "type": "player_prop",
+      "sport": "NFL",
+      "player": "Prescott",
+      "market": "Passing Yards",
+      "side": "Over",
+      "line": "263.5",
+      "placedBook": "DraftKings",
+      "wageredOdds": -113,
+      "sharpBooks": [
+        "DraftKings",
+        "FanDuel",
+        "Novig",
+        "Kalshi",
+        "Pinnacle",
+        "Circa Sports"
+      ]
+    }
+  ]
 }
