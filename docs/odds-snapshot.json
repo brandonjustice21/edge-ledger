@@ -1,11 +1,18 @@
 {
-  "generatedAt": "2026-10-26T20:08:28Z",
+  "generatedAt": "2026-10-26T20:17:10Z",
   "entries": [
     {
       "label": "Example: Chiefs game",
       "game": "Kansas City Chiefs @ Denver Broncos",
       "start": "2026-11-01T21:25:00Z",
       "odds": [
+        {
+          "sportsbook": "DraftKings",
+          "market": "Total Points",
+          "selection": "Under 41.5",
+          "price": -115,
+          "points": 41.5
+        },
         {
           "sportsbook": "DraftKings",
           "market": "Point Spread",
@@ -22,6 +29,13 @@
         },
         {
           "sportsbook": "DraftKings",
+          "market": "Moneyline",
+          "selection": "Kansas City Chiefs",
+          "price": -125,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
           "market": "Point Spread",
           "selection": "Kansas City Chiefs",
           "price": -110,
@@ -30,23 +44,9 @@
         {
           "sportsbook": "DraftKings",
           "market": "Total Points",
-          "selection": "Under 41.5",
-          "price": -115,
-          "points": 41.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Total Points",
           "selection": "Over 41.5",
           "price": -105,
           "points": 41.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Moneyline",
-          "selection": "Kansas City Chiefs",
-          "price": -125,
-          "points": null
         }
       ]
     },
@@ -60,7 +60,7 @@
     },
     {
       "label": "Hurts Passing Yards Over 215.5 (DraftKings) - tonight's game",
-      "error": "Matched Jalen Hurts's fixture (7179 odds lines total), but none matched market \"Passing Yards\" for this player. Check the Action log and adjust market_keywords() in update_odds.sh."
+      "error": "Matched Jalen Hurts's fixture (7194 odds lines total), but none matched market \"Passing Yards\" for this player. Check the Action log and adjust market_keywords() in update_odds.sh."
     }
   ]
 }
