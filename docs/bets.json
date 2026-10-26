@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-26T23:06:02Z",
+  "updatedAt": "2026-10-26T23:11:16Z",
   "bets": [
     {
       "status": "tracking",
@@ -303,268 +303,72 @@
         {
           "sportsbook": "DraftKings",
           "market": "Player Passing Yards",
-          "selection": "Dak Prescott Over 262.5",
+          "selection": "Dak Prescott Under 264.5",
           "price": -113,
-          "points": 262.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "1st Half Player Passing Yards",
-          "selection": "Dak Prescott Over 144.5",
-          "price": 117,
-          "points": 144.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Player Passing Yards (Combo)",
-          "selection": "Dak Prescott + Tanner McKee Over 524.5",
-          "price": 218,
-          "points": 524.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Player Passing Yards H2H Spread",
-          "selection": "Dak Prescott :: Tanner McKee -- Dak Prescott -58.5",
-          "price": -113,
-          "points": -58.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Player Passing Yards (Either)",
-          "selection": "Dak Prescott + Tanner McKee Over 324.5",
-          "price": 301,
-          "points": 324.5
+          "points": 264.5
         },
         {
           "sportsbook": "DraftKings",
           "market": "Player Passing Yards",
-          "selection": "Dak Prescott Over 399.5",
-          "price": 1780,
-          "points": 399.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Player Passing Yards",
-          "selection": "Dak Prescott Over 179.5",
-          "price": -1320,
-          "points": 179.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "1st Quarter Player Passing Yards",
-          "selection": "Dak Prescott Over 59.5",
-          "price": -126,
-          "points": 59.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "1st Quarter Player Passing Yards",
-          "selection": "Dak Prescott Over 104.5",
-          "price": 496,
-          "points": 104.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Player Passing Yards",
-          "selection": "Dak Prescott Over 419.5",
-          "price": 2600,
-          "points": 419.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Player Passing Yards",
-          "selection": "Dak Prescott Over 429.5",
-          "price": 3000,
-          "points": 429.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Player Passing Yards (Combo)",
-          "selection": "Dak Prescott + Tanner McKee Under 468.5",
-          "price": -113,
-          "points": 468.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Player Passing Yards",
-          "selection": "Dak Prescott Over 189.5",
-          "price": -900,
-          "points": 189.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Player Passing Yards (Either)",
-          "selection": "Dak Prescott + Tanner McKee Over 249.5",
-          "price": -246,
-          "points": 249.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "1st Quarter Player Passing Yards",
-          "selection": "Dak Prescott Over 99.5",
-          "price": 411,
-          "points": 99.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "1st Quarter Player Passing Yards",
-          "selection": "Dak Prescott Over 109.5",
-          "price": 600,
-          "points": 109.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Player Passing Yards (Either)",
-          "selection": "Dak Prescott + Tanner McKee Over 374.5",
-          "price": 1040,
-          "points": 374.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Player Passing Yards",
-          "selection": "Dak Prescott Under 262.5",
+          "selection": "Dak Prescott Over 264.5",
           "price": -111,
-          "points": 262.5
+          "points": 264.5
         },
         {
-          "sportsbook": "DraftKings",
+          "sportsbook": "FanDuel",
           "market": "Player Passing Yards",
-          "selection": "Dak Prescott Over 389.5",
-          "price": 1480,
-          "points": 389.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Player Passing Yards",
-          "selection": "Dak Prescott Over 209.5",
-          "price": -472,
-          "points": 209.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "1st Quarter Player Passing Yards",
-          "selection": "Dak Prescott Over 34.5",
-          "price": -442,
-          "points": 34.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Player Passing Yards",
-          "selection": "Dak Prescott Over 409.5",
-          "price": 2100,
-          "points": 409.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "1st Half Player Passing Yards",
-          "selection": "Dak Prescott Over 99.5",
-          "price": -379,
-          "points": 99.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Player Passing Yards",
-          "selection": "Dak Prescott Over 339.5",
-          "price": 521,
-          "points": 339.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Player Passing Yards",
-          "selection": "Dak Prescott Over 279.5",
-          "price": 132,
-          "points": 279.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "1st Quarter Player Passing Yards",
-          "selection": "Dak Prescott Over 89.5",
-          "price": 278,
-          "points": 89.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "1st Quarter Player Passing Yards",
-          "selection": "Dak Prescott Under 61.5",
+          "selection": "Dak Prescott Under 263.5",
           "price": -113,
-          "points": 61.5
+          "points": 263.5
         },
         {
-          "sportsbook": "DraftKings",
-          "market": "Player Passing Yards (Combo)",
-          "selection": "Dak Prescott + Tanner McKee Over 499.5",
-          "price": 145,
-          "points": 499.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "1st Quarter Player Passing Yards",
-          "selection": "Dak Prescott Over 49.5",
-          "price": -199,
-          "points": 49.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "1st Quarter Player Passing Yards",
-          "selection": "Dak Prescott Over 54.5",
-          "price": -158,
-          "points": 54.5
-        },
-        {
-          "sportsbook": "DraftKings",
+          "sportsbook": "FanDuel",
           "market": "Player Passing Yards",
-          "selection": "Dak Prescott Over 369.5",
-          "price": 970,
-          "points": 369.5
+          "selection": "Dak Prescott Over 263.5",
+          "price": -113,
+          "points": 263.5
         },
         {
-          "sportsbook": "DraftKings",
-          "market": "1st Half Player Passing Yards",
-          "selection": "Dak Prescott Over 164.5",
-          "price": 211,
-          "points": 164.5
+          "sportsbook": "Kalshi",
+          "market": "Player Passing Yards",
+          "selection": "Dak Prescott Under 274.5",
+          "price": -143,
+          "points": 274.5
         },
         {
-          "sportsbook": "DraftKings",
-          "market": "1st Half Player Passing Yards",
-          "selection": "Dak Prescott Over 169.5",
-          "price": 242,
-          "points": 169.5
+          "sportsbook": "Kalshi",
+          "market": "Player Passing Yards",
+          "selection": "Dak Prescott Over 274.5",
+          "price": 118,
+          "points": 274.5
         },
         {
-          "sportsbook": "DraftKings",
-          "market": "1st Half Player Passing Yards",
-          "selection": "Dak Prescott Over 119.5",
-          "price": -186,
-          "points": 119.5
+          "sportsbook": "Novig",
+          "market": "Player Passing Yards",
+          "selection": "Dak Prescott Under 261.5",
+          "price": -102,
+          "points": 261.5
         },
         {
-          "sportsbook": "DraftKings",
-          "market": "Player Passing Yards (Combo)",
-          "selection": "Dak Prescott + Tanner McKee Over 424.5",
-          "price": -251,
-          "points": 424.5
+          "sportsbook": "Novig",
+          "market": "Player Passing Yards",
+          "selection": "Dak Prescott Over 261.5",
+          "price": -104,
+          "points": 261.5
         },
         {
-          "sportsbook": "DraftKings",
-          "market": "1st Quarter Player Passing Yards",
-          "selection": "Dak Prescott Over 79.5",
-          "price": 184,
-          "points": 79.5
+          "sportsbook": "Pinnacle",
+          "market": "Player Passing Yards",
+          "selection": "Dak Prescott Under 265.5",
+          "price": -112,
+          "points": 265.5
         },
         {
-          "sportsbook": "DraftKings",
-          "market": "1st Half Player Passing Yards",
-          "selection": "Dak Prescott Over 194.5",
-          "price": 491,
-          "points": 194.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "1st Quarter Player Passing Yards",
-          "selection": "Dak Prescott Over 94.5",
-          "price": 338,
-          "points": 94.5
+          "sportsbook": "Pinnacle",
+          "market": "Player Passing Yards",
+          "selection": "Dak Prescott Over 265.5",
+          "price": -108,
+          "points": 265.5
         }
       ],
       "closingOdds": null,
@@ -587,7 +391,7 @@
         "Circa Sports"
       ],
       "fixtureStart": "2026-10-27T00:15:00Z",
-      "liveCapturedAt": "2026-10-26T23:06:02Z",
+      "liveCapturedAt": "2026-10-26T23:11:16Z",
       "openingCapturedAt": "2026-10-26T23:06:02Z",
       "lastError": null
     }
