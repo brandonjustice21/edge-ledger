@@ -23,5 +23,17 @@
     "placedBook": "FanDuel",
     "placedOdds": -110,
     "sharpBooks": ["DraftKings", "FanDuel", "Novig", "Kalshi", "Pinnacle", "Circa"]
+  },
+  {
+    "label": "Hurts Passing Yards Over 215.5 (DraftKings) - tonight's game",
+    "type": "player_prop",
+    "sport": "NFL",
+    "player": "Hurts",
+    "market": "Passing Yards",
+    "side": "Over",
+    "line": "215.5",
+    "placedBook": "DraftKings",
+    "placedOdds": -115,
+    "sharpBooks": ["DraftKings", "FanDuel", "Novig", "Kalshi", "Pinnacle", "Circa"]
   }
 ]
