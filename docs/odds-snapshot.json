@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-26T19:03:57Z",
+  "generatedAt": "2026-10-26T19:05:40Z",
   "entries": [
     {
       "label": "Example: Chiefs game",
@@ -8,16 +8,9 @@
       "odds": [
         {
           "sportsbook": "DraftKings",
-          "market": "Point Spread",
-          "selection": "Denver Broncos",
-          "price": -110,
-          "points": 1.5
-        },
-        {
-          "sportsbook": "DraftKings",
           "market": "Total Points",
-          "selection": "Under 41.5",
-          "price": -115,
+          "selection": "Over 41.5",
+          "price": -105,
           "points": 41.5
         },
         {
@@ -36,23 +29,34 @@
         },
         {
           "sportsbook": "DraftKings",
-          "market": "Moneyline",
-          "selection": "Kansas City Chiefs",
-          "price": -125,
-          "points": null
+          "market": "Point Spread",
+          "selection": "Denver Broncos",
+          "price": -110,
+          "points": 1.5
         },
         {
           "sportsbook": "DraftKings",
           "market": "Total Points",
-          "selection": "Over 41.5",
-          "price": -105,
+          "selection": "Under 41.5",
+          "price": -115,
           "points": 41.5
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Moneyline",
+          "selection": "Kansas City Chiefs",
+          "price": -125,
+          "points": null
         }
       ]
     },
     {
       "label": "Brunson Assists Over 6.5 (DraftKings @ +150)",
       "error": "OddsJam returned zero players for league \"nba\" — this looks like a data-coverage gap for that league on their end (not a bad request), not a spelling issue. Confirm with OddsJam/OpticOdds support whether player data is available for this league."
+    },
+    {
+      "label": "Mahomes Passing Yards Over 275.5 (FanDuel @ -110)",
+      "error": "No nfl player matched \"Mahomes\" across 800 players checked. Check spelling."
     }
   ]
 }
