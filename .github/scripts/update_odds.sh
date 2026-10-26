@@ -193,9 +193,14 @@ process_player_prop_entry() {
   done
 
   if [ -z "$pid" ]; then
-    echo "  [debug] still no match — dumping /leagues?sport=$op_sport to find the real league id:" >&2
-    curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/leagues?sport=$op_sport" 2>/dev/null | head -c 1000 >&2
-    echo >&2
+    # Write to a file first, never pipe curl straight into head/grep — under `set -o
+    # pipefail` that pipeline can make curl exit 23 ("write error", a broken-pipe from
+    # the consumer closing early) and abort the whole script, which is exactly what
+    # broke this on the previous run.
+    echo "  [debug] still no match — searching /leagues?sport=$op_sport for anything named like \"$op_league\":" >&2
+    curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/leagues?sport=$op_sport" > "$TMP/leagues.json" 2>/dev/null || echo '{}' > "$TMP/leagues.json"
+    jq -c --arg kw "$sport" '(.data // []) | map(select((.id // "" | test($kw; "i")) or (.name // "" | test($kw; "i")))) | .[0:10]' "$TMP/leagues.json" 2>/dev/null >&2 || true
+    echo "  [debug] total leagues for sport=$op_sport: $(jq -r '(.data // []) | length' "$TMP/leagues.json" 2>/dev/null || echo '?')" >&2
   fi
 
   if [ -z "$pid" ]; then
