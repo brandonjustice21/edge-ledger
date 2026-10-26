@@ -1,11 +1,18 @@
 {
-  "generatedAt": "2026-10-26T17:52:25Z",
+  "generatedAt": "2026-10-26T17:53:40Z",
   "entries": [
     {
       "label": "Example: Chiefs game",
       "game": "Kansas City Chiefs @ Denver Broncos",
       "start": "2026-11-01T21:25:00Z",
       "odds": [
+        {
+          "sportsbook": "DraftKings",
+          "market": "Point Spread",
+          "selection": "Kansas City Chiefs",
+          "price": -110,
+          "points": -1.5
+        },
         {
           "sportsbook": "DraftKings",
           "market": "Moneyline",
@@ -16,8 +23,15 @@
         {
           "sportsbook": "DraftKings",
           "market": "Total Points",
-          "selection": "",
+          "selection": "Over 41.5",
           "price": -105,
+          "points": 41.5
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Total Points",
+          "selection": "Under 41.5",
+          "price": -115,
           "points": 41.5
         },
         {
@@ -29,24 +43,10 @@
         },
         {
           "sportsbook": "DraftKings",
-          "market": "Total Points",
-          "selection": "",
-          "price": -115,
-          "points": 41.5
-        },
-        {
-          "sportsbook": "DraftKings",
           "market": "Point Spread",
           "selection": "Denver Broncos",
           "price": -110,
           "points": 1.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Point Spread",
-          "selection": "Kansas City Chiefs",
-          "price": -110,
-          "points": -1.5
         }
       ]
     }
