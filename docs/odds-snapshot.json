@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-26T19:55:20Z",
+  "generatedAt": "2026-10-26T20:08:28Z",
   "entries": [
     {
       "label": "Example: Chiefs game",
@@ -9,9 +9,30 @@
         {
           "sportsbook": "DraftKings",
           "market": "Point Spread",
+          "selection": "Denver Broncos",
+          "price": -110,
+          "points": 1.5
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Moneyline",
+          "selection": "Denver Broncos",
+          "price": 105,
+          "points": null
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Point Spread",
           "selection": "Kansas City Chiefs",
           "price": -110,
           "points": -1.5
+        },
+        {
+          "sportsbook": "DraftKings",
+          "market": "Total Points",
+          "selection": "Under 41.5",
+          "price": -115,
+          "points": 41.5
         },
         {
           "sportsbook": "DraftKings",
@@ -26,27 +47,6 @@
           "selection": "Kansas City Chiefs",
           "price": -125,
           "points": null
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Point Spread",
-          "selection": "Denver Broncos",
-          "price": -110,
-          "points": 1.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Total Points",
-          "selection": "Under 41.5",
-          "price": -115,
-          "points": 41.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Moneyline",
-          "selection": "Denver Broncos",
-          "price": 105,
-          "points": null
         }
       ]
     },
@@ -60,7 +60,7 @@
     },
     {
       "label": "Hurts Passing Yards Over 215.5 (DraftKings) - tonight's game",
-      "error": "Matched Jalen Hurts's fixture (7169 odds lines total), but none matched market \"Passing Yards\" for this player. Check the Action log and adjust market_keywords() in update_odds.sh."
+      "error": "Matched Jalen Hurts's fixture (7179 odds lines total), but none matched market \"Passing Yards\" for this player. Check the Action log and adjust market_keywords() in update_odds.sh."
     }
   ]
 }
