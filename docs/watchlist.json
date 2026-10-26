@@ -25,7 +25,7 @@
     "sharpBooks": ["DraftKings", "FanDuel", "Novig", "Kalshi", "Pinnacle", "Circa Sports"]
   },
   {
-    "label": "Hurts Passing Yards Over 215.5 (DraftKings) - tonight's game",
+    "label": "Hurts Passing Yards Over 215.5 (DraftKings) - injured, no line expected",
     "type": "player_prop",
     "sport": "NFL",
     "player": "Hurts",
@@ -34,6 +34,15 @@
     "line": "215.5",
     "placedBook": "DraftKings",
     "placedOdds": -115,
+    "sharpBooks": ["DraftKings", "FanDuel", "Novig", "Kalshi", "Pinnacle", "Circa Sports"]
+  },
+  {
+    "label": "Prescott Passing Yards (tonight's game)",
+    "type": "player_prop",
+    "sport": "NFL",
+    "player": "Prescott",
+    "market": "Passing Yards",
+    "placedBook": "DraftKings",
     "sharpBooks": ["DraftKings", "FanDuel", "Novig", "Kalshi", "Pinnacle", "Circa Sports"]
   }
 ]
