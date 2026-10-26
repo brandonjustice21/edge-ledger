@@ -163,10 +163,17 @@ process_player_prop_entry() {
     return
   fi
 
-  echo "Searching $op_league players for \"$player\"..." >&2
+  # The /players endpoint's docs example uses an UPPERCASE league code (league=NFL),
+  # unlike /fixtures/active which confirmed working with lowercase (league=nfl) — try
+  # uppercase here since this is the one endpoint that's never been tested live.
+  local op_league_upper
+  op_league_upper=$(echo "$op_league" | tr '[:lower:]' '[:upper:]')
+
+  echo "Searching $op_league_upper players for \"$player\"..." >&2
   pid=""; pname=""
   for page in $(seq 1 "$PLAYER_SEARCH_PAGES"); do
-    curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/players?league=$op_league&page=$page" > "$TMP/players.json" || echo '{}' > "$TMP/players.json"
+    curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/players?league=$op_league_upper&page=$page" > "$TMP/players.json" || echo '{}' > "$TMP/players.json"
+    echo "  page $page: $(jq -r '(.data // []) | length' "$TMP/players.json" 2>/dev/null || echo '?') players returned, has_more=$(jq -r '.has_more // "?"' "$TMP/players.json" 2>/dev/null)" >&2
     found=$(jq -c --arg name "$player" '
       (.data // []) | map(select(
         (.name // "" | test($name; "i")) or (.last_name // "" | test($name; "i"))
