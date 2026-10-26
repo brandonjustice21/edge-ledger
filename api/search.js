@@ -138,13 +138,54 @@ module.exports = async function handler(req, res) {
 
     function nameOk(o) { return (o.selection || "").toLowerCase().indexOf(nameKw) !== -1; }
 
+    // Each book also posts a long tail of alternate lines for the same market (every
+    // point value they'll offer) — is_main flags just the one they're actually quoting
+    // as the real line. Try main-line-only first; some books/markets don't set is_main
+    // reliably, so fall back to every line (collapsed to one per book/side below)
+    // rather than showing nothing.
     let matched = allOdds.filter(function (o) {
-      return exactMarket && (o.market || "").toLowerCase() === exactMarket && nameOk(o);
+      return exactMarket && (o.market || "").toLowerCase() === exactMarket && nameOk(o) && o.is_main === true;
     });
+    let usedMain = matched.length > 0;
+    if (!matched.length) {
+      matched = allOdds.filter(function (o) {
+        return exactMarket && (o.market || "").toLowerCase() === exactMarket && nameOk(o);
+      });
+    }
+    if (!matched.length) {
+      matched = allOdds.filter(function (o) {
+        const marketOk = !kwPattern || kwPattern.test(o.market || "");
+        return marketOk && nameOk(o) && o.is_main === true;
+      });
+      usedMain = matched.length > 0;
+    }
     if (!matched.length) {
       matched = allOdds.filter(function (o) {
         const marketOk = !kwPattern || kwPattern.test(o.market || "");
         return marketOk && nameOk(o);
+      });
+    }
+    // Still an alternate-line flood (is_main wasn't reliable for this market)? Collapse
+    // to one line per sportsbook + side (Over/Under), picking the point value closest to
+    // the midpoint of what's on offer — the book's real advertised line for that side.
+    if (!usedMain && matched.length > SHARP_BOOKS.length * 2) {
+      const groups = {};
+      matched.forEach(function (o) {
+        const side = /\bunder\b/i.test(o.selection || "") ? "Under" : (/\bover\b/i.test(o.selection || "") ? "Over" : "?");
+        const key = o.sportsbook + "|" + side;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(o);
+      });
+      matched = Object.keys(groups).map(function (key) {
+        const lines = groups[key];
+        const points = lines.map(function (o) { return Number(o.points); }).filter(function (n) { return !isNaN(n); });
+        if (!points.length) return lines[0];
+        const mid = points.reduce(function (a, b) { return a + b; }, 0) / points.length;
+        return lines.reduce(function (best, o) {
+          const d = Math.abs(Number(o.points) - mid);
+          const bd = Math.abs(Number(best.points) - mid);
+          return d < bd ? o : best;
+        });
       });
     }
     matched = matched
