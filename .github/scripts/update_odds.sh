@@ -170,7 +170,7 @@ process_player_prop_entry() {
   # side, not a bug here. If a league keeps coming back with zero despite a real player
   # name, that's the first thing to suspect — not the request format.
   echo "Searching $op_league players for \"$player\"..." >&2
-  pid=""; pname=""; total_seen=0
+  pid=""; pname=""; team_id=""; total_seen=0
   for page in $(seq 1 "$PLAYER_SEARCH_PAGES"); do
     curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/players?league=$op_league&page=$page" > "$TMP/players.json" || echo '{}' > "$TMP/players.json"
     page_n=$(jq -r '(.data // []) | length' "$TMP/players.json" 2>/dev/null || echo 0)
@@ -183,6 +183,7 @@ process_player_prop_entry() {
     if [ -n "$found" ] && [ "$found" != "null" ]; then
       pid=$(echo "$found" | jq -r '.id')
       pname=$(echo "$found" | jq -r '.name')
+      team_id=$(echo "$found" | jq -r '.team.id // empty')
       break
     fi
     has_more=$(jq -r '.has_more // false' "$TMP/players.json" 2>/dev/null || echo "false")
@@ -200,25 +201,51 @@ process_player_prop_entry() {
     return
   fi
 
-  echo "Matched player $pid ($pname). Fetching \"$market\" odds from sharp books..." >&2
+  if [ -z "$team_id" ]; then
+    jq -n --arg label "$label" --arg pname "$pname" --arg error "Matched $pname but the API didn't return a team for them, so their fixture can't be looked up." \
+      '{label: $label, error: $error}' >> "$TMP/entries.jsonl"
+    return
+  fi
+
+  # Confirmed by direct test: /fixtures/odds?player_id=X returns ZERO odds even for a
+  # player whose game has 3000+ real odds lines (including dozens of "Player ..."
+  # markets) when the SAME fixture is queried by fixture_id instead — so player_id
+  # filtering on this endpoint doesn't work as documented. Use team_id to find their
+  # fixture (the same proven-working lookup as the team/game path), then filter the
+  # full fixture odds by market name AND the player's own name in the selection text.
+  echo "Matched player $pid ($pname, team $team_id). Finding their fixture..." >&2
+  curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/fixtures/active?team_id=$team_id&page=1" > "$TMP/pfixtures.json" || echo '{}' > "$TMP/pfixtures.json"
+  fid=$(jq -r '(.data // [])[0].id // empty' "$TMP/pfixtures.json" 2>/dev/null)
+
+  if [ -z "$fid" ]; then
+    jq -n --arg label "$label" --arg pname "$pname" --arg error "Matched $pname but found no upcoming fixture for their team (team_id $team_id)." \
+      '{label: $label, error: $error}' >> "$TMP/entries.jsonl"
+    return
+  fi
+
+  echo "Found fixture $fid. Fetching \"$market\" odds from sharp books..." >&2
   local -a sb_args=()
   while IFS= read -r sb; do
     sb_args+=(--data-urlencode "sportsbook=$sb")
   done < <(echo "$sharp_books" | jq -r '.[]')
 
   curl -sS -G -H "X-Api-Key: $ODDSJAM_API_KEY" \
-    --data-urlencode "player_id=$pid" \
+    --data-urlencode "fixture_id=$fid" \
     "${sb_args[@]}" \
     "$API_BASE/fixtures/odds" > "$TMP/odds_raw.json" || echo '{}' > "$TMP/odds_raw.json"
 
   kw_pattern=$(market_keywords "$market")
+  # last name only, for matching against the selection text (e.g. "Hurts" in
+  # "Jalen Hurts Over 215.5") — the full "pname" often won't appear verbatim
+  name_kw=$(echo "$pname" | awk '{print $NF}')
 
   raw_odds_count=$(jq -r '[(.data // [])[] | (.odds // [])[]] | length' "$TMP/odds_raw.json" 2>/dev/null || echo 0)
-  echo "  [debug] raw odds entries for this player (any market, these books) before filtering: $raw_odds_count" >&2
+  echo "  [debug] raw odds entries for this fixture (any market, these books): $raw_odds_count" >&2
 
-  jq -c --argjson cap "$MAX_ODDS_PER_GAME" --arg kw "$kw_pattern" '
+  jq -c --argjson cap "$MAX_ODDS_PER_GAME" --arg kw "$kw_pattern" --arg nm "$name_kw" '
     [ (.data // [])[] | (.odds // [])[]
       | select(.market as $m | ($m // "" | test($kw; "i")))
+      | select((.selection // "") + " " + (.name // "") | test($nm; "i"))
       | {sportsbook, market, selection: (if (.selection // "") == "" then (.name // "") else .selection end), price, points}
     ] | sort_by(.sportsbook) | .[0:$cap]
   ' "$TMP/odds_raw.json" > "$TMP/odds.json" 2>/dev/null || echo "[]" > "$TMP/odds.json"
@@ -227,16 +254,12 @@ process_player_prop_entry() {
 
   if [ "$matched_count" = "0" ]; then
     if [ "$raw_odds_count" = "0" ]; then
-      # Confirmed by direct test: a live tonight's game has 3000+ odds lines across
-      # dozens of "Player ..." markets at these same books, so an empty raw count here
-      # just means these sharp books haven't posted ANY odds for this specific game yet
-      # — normal well before kickoff, not a bug. Retry closer to game time.
-      jq -n --arg label "$label" --arg pname "$pname" --arg error "Matched $pname, but none of these sharp books have posted any odds for this game yet (0 odds lines returned at all, any market) — books typically open player markets in the day or two before kickoff. Re-run closer to game time." \
+      jq -n --arg label "$label" --arg pname "$pname" --arg error "Matched $pname's fixture ($fid), but these sharp books have posted no odds for it at all yet — normal well before kickoff. Re-run closer to game time." \
         '{label: $label, error: $error}' >> "$TMP/entries.jsonl"
     else
-      echo "  [debug] $raw_odds_count raw odds lines exist but none matched market_keywords for \"$market\" (pattern: $kw_pattern). Distinct market names available:" >&2
-      jq -c '[(.data // [])[] | (.odds // [])[] | .market] | unique' "$TMP/odds_raw.json" >&2 2>/dev/null || true
-      jq -n --arg label "$label" --arg pname "$pname" --arg market "$market" --arg error "Matched $pname and found $raw_odds_count odds lines from these books, but none matched the \"$market\" market name. Check the Action log's raw market list and adjust market_keywords() in update_odds.sh for this market." \
+      echo "  [debug] $raw_odds_count raw odds lines exist but none matched market \"$market\" (pattern: $kw_pattern) + name \"$name_kw\". Distinct markets containing this player's name:" >&2
+      jq -c --arg nm "$name_kw" '[(.data // [])[] | (.odds // [])[] | select((.selection // "")+" "+(.name // "") | test($nm; "i")) | .market] | unique' "$TMP/odds_raw.json" >&2 2>/dev/null || true
+      jq -n --arg label "$label" --arg pname "$pname" --arg market "$market" --arg error "Matched $pname's fixture ($raw_odds_count odds lines total), but none matched market \"$market\" for this player. Check the Action log and adjust market_keywords() in update_odds.sh." \
         '{label: $label, error: $error}' >> "$TMP/entries.jsonl"
     fi
     return
