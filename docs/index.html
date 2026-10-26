@@ -1030,7 +1030,7 @@ function parseBetPaste(raw){
   var lines = text.split("\n").map(function(l){return l.trim();}).filter(Boolean);
   var out = {};
 
-  var books = ["DraftKings","FanDuel","BetMGM","Caesars","ESPN BET","Fanatics","bet365","PointsBet","BetRivers","Hard Rock Bet"];
+  var books = ["DraftKings","FanDuel","BetMGM","Caesars","ESPN BET","Fanatics","bet365","PointsBet","BetRivers","Hard Rock Bet","Novig","Kalshi","Pinnacle","Circa"];
   for(var i=0;i<books.length;i++){
     if(text.toLowerCase().indexOf(books[i].toLowerCase())!==-1){ out.book = books[i]; break; }
   }
@@ -1094,6 +1094,69 @@ function parseBetPaste(raw){
   return out;
 }
 
+/* ---------- player-prop shorthand, e.g. "brunson assists over 6.5 at draftkings +150" ---------- */
+var SHARP_BOOKS = ["DraftKings","FanDuel","Novig","Kalshi","Pinnacle","Circa"];
+var STAT_KEYWORDS = [
+  [/\bpoints?\s*\+\s*rebounds?\s*\+\s*assists?\b|\bpra\b/i, "Points + Rebounds + Assists", null],
+  [/\bpoints?\s*\+\s*rebounds?\b|\bpr\b(?!\w)/i, "Points + Rebounds", null],
+  [/\bpoints?\s*\+\s*assists?\b|\bpa\b(?!\w)/i, "Points + Assists", null],
+  [/\brebounds?\s*\+\s*assists?\b|\bra\b(?!\w)/i, "Rebounds + Assists", null],
+  [/\bthrees?\b|\b3-?pointers?\b|\b3pm\b/i, "3-Pointers Made", null],
+  [/\brebounds?\b/i, "Rebounds", null],
+  [/\bassists?\b/i, "Assists", null],
+  [/\bsteals?\b/i, "Steals", null],
+  [/\bblocks?\b/i, "Blocks", null],
+  [/\bturnovers?\b/i, "Turnovers", null],
+  [/\bpassing\s*yards?\b/i, "Passing Yards", "NFL"],
+  [/\brushing\s*yards?\b/i, "Rushing Yards", "NFL"],
+  [/\breceiving\s*yards?\b/i, "Receiving Yards", "NFL"],
+  [/\breceptions?\b/i, "Receptions", "NFL"],
+  [/\bpassing\s*touchdowns?\b|\bpass(?:ing)?\s*tds?\b/i, "Passing Touchdowns", "NFL"],
+  [/\brushing\s*touchdowns?\b|\brush(?:ing)?\s*tds?\b/i, "Rushing Touchdowns", "NFL"],
+  [/\btouchdowns?\b|\btds?\b/i, "Touchdowns", "NFL"],
+  [/\bstrikeouts?\b|\bk'?s\b/i, "Strikeouts", "MLB"],
+  [/\bhome\s*runs?\b|\bhrs?\b(?!\w)/i, "Home Runs", "MLB"],
+  [/\btotal\s*bases?\b/i, "Total Bases", "MLB"],
+  [/\brbis?\b/i, "RBIs", "MLB"],
+  [/\bhits?\b/i, "Hits", "MLB"],
+  [/\bshots?\s*on\s*goal\b|\bsog\b/i, "Shots on Goal", "NHL"],
+  [/\bsaves?\b/i, "Saves", null],
+  [/\bgoals?\b/i, "Goals", null],
+  [/\bpoints?\b/i, "Points", null]
+];
+function titleCase(s){
+  return String(s||"").split(/\s+/).map(function(w){ return w ? w.charAt(0).toUpperCase()+w.slice(1).toLowerCase() : w; }).join(" ");
+}
+function parsePropShorthand(text){
+  for(var i=0;i<STAT_KEYWORDS.length;i++){
+    var m = text.match(STAT_KEYWORDS[i][0]);
+    if(!m) continue;
+    var statLabel = STAT_KEYWORDS[i][1], sportHint = STAT_KEYWORDS[i][2];
+    var ouMatch = text.match(/\b(over|under|o|u)\.?\s*(\d+(?:\.\d+)?)/i);
+    var side = null, line = null;
+    if(ouMatch){ side = /^o/i.test(ouMatch[1]) ? "Over" : "Under"; line = ouMatch[2]; }
+    var playerRaw = text.slice(0, m.index).trim().replace(/['’]s$/,"").trim();
+    if(!playerRaw) return null; // no player name before the stat keyword — probably not prop shorthand
+    return { player: titleCase(playerRaw), stat: statLabel, side: side, line: line, sportHint: sportHint };
+  }
+  return null;
+}
+function propWatchlistSnippet(prop, book, odds){
+  var obj = {
+    label: prop.player+" "+prop.stat+(prop.side?" "+prop.side+" "+prop.line:"")+" ("+(book||"book TBD")+(odds!=null?" @ "+fmtOdds(odds):"")+")",
+    type: "player_prop",
+    sport: prop.sportHint || "(set sport)",
+    player: prop.player,
+    market: prop.stat,
+    side: prop.side || "",
+    line: prop.line || "",
+    placedBook: book || "",
+    placedOdds: odds!=null ? odds : "",
+    sharpBooks: SHARP_BOOKS
+  };
+  return JSON.stringify(obj, null, 2);
+}
+
 document.getElementById("btnTogglePaste").addEventListener("click", function(){
   var area = document.getElementById("pasteArea");
   var open = area.style.display !== "none";
@@ -1109,6 +1172,12 @@ document.getElementById("btnParsePaste").addEventListener("click", function(){
   var raw = document.getElementById("pasteText").value;
   if(!raw.trim()){ toast("Paste the confirmation text first."); return; }
   var parsed = parseBetPaste(raw);
+  var prop = parsePropShorthand(raw);
+  if(prop){
+    parsed.type = "Prop";
+    parsed.selection = prop.player+" "+prop.stat+(prop.side?" "+prop.side+" "+prop.line:"");
+    if(prop.sportHint) parsed.sport = prop.sportHint;
+  }
   var chips = [];
   function apply(id, val, label, fmt){
     if(val===undefined || val===null || val===""){ chips.push({label:label, hit:false}); return; }
@@ -1123,9 +1192,30 @@ document.getElementById("btnParsePaste").addEventListener("click", function(){
   apply("fieldTaken", parsed.oddsTaken, "Odds", function(v){return fmtOdds(v);});
   updateLiveCalc();
   var result = document.getElementById("pasteResult");
-  result.innerHTML = '<div class="paste-chips">'+chips.map(function(c){
+  var html = '<div class="paste-chips">'+chips.map(function(c){
     return '<span class="paste-chip'+(c.hit?'':' miss')+'">'+(c.hit?c.label:c.label+" — not found")+'</span>';
   }).join("")+'</div><div style="margin-top:6px;">Double-check the fields below before saving — parsing is a best guess.</div>';
+  if(prop){
+    var snippet = propWatchlistSnippet(prop, parsed.book, parsed.oddsTaken);
+    html += '<div style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--border-strong);">'+
+      '<div style="font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--fg-muted); margin-bottom:5px;">Track this prop\'s EV (sharp books: '+SHARP_BOOKS.join(", ")+')</div>'+
+      '<textarea readonly style="min-height:120px; font-family:var(--font-mono); font-size:11px; width:100%;">'+snippet.replace(/</g,"&lt;")+'</textarea>'+
+      '<div style="display:flex; gap:8px; margin-top:6px;">'+
+      '<button type="button" class="btn sm primary" id="btnCopyPropSnippet">Copy snippet</button>'+
+      '</div>'+
+      '<div style="font-size:11px; color:var(--fg-faint); margin-top:5px;">Paste this into the <code>entries</code> array in watchlist.json on GitHub (fix "sport" if needed), then run or wait for the Update Odds workflow — it\'ll track this prop\'s price across those books from then on.</div>'+
+      '</div>';
+    result.innerHTML = html;
+    document.getElementById("btnCopyPropSnippet").addEventListener("click", function(){
+      var ta = result.querySelector("textarea");
+      ta.select();
+      try{
+        navigator.clipboard.writeText(snippet).then(function(){ toast("Snippet copied."); }).catch(function(){ toast("Copied via selection — press Cmd/Ctrl+C."); });
+      }catch(e){ toast("Press Cmd/Ctrl+C to copy the selected text."); }
+    });
+  } else {
+    result.innerHTML = html;
+  }
   result.classList.add("show");
 });
 

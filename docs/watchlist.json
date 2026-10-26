@@ -1,3 +1,15 @@
 [
-  { "label": "Example: Chiefs game", "sport": "NFL", "team": "Chiefs", "sportsbook": "DraftKings" }
+  { "label": "Example: Chiefs game", "sport": "NFL", "team": "Chiefs", "sportsbook": "DraftKings" },
+  {
+    "label": "Brunson Assists Over 6.5 (DraftKings @ +150)",
+    "type": "player_prop",
+    "sport": "NBA",
+    "player": "Brunson",
+    "market": "Assists",
+    "side": "Over",
+    "line": "6.5",
+    "placedBook": "DraftKings",
+    "placedOdds": 150,
+    "sharpBooks": ["DraftKings", "FanDuel", "Novig", "Kalshi", "Pinnacle", "Circa"]
+  }
 ]
