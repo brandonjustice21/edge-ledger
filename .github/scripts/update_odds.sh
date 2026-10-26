@@ -87,12 +87,17 @@ for i in $(seq 0 $((count - 1))); do
     --data-urlencode "sportsbook=$book" \
     "$API_BASE/fixtures/odds" > "$TMP/odds_raw.json" || echo '{}' > "$TMP/odds_raw.json"
 
-  # Keep only the main lines (moneyline/spread/total), capped — a game can otherwise
-  # carry hundreds of player-prop lines, which is both the size bug above and a
-  # useless wall of text in the "Look up odds" picker.
+  # Keep only the core full-game lines, capped. NOTE: OpticOdds' "is_main" flag marks the
+  # primary line *within whatever market it's on* (e.g. it's also true for the main
+  # "Correct Score" or "1st Half Correct Score" line) — it does NOT mean "this is a
+  # moneyline/spread/total market", so it can't be used alone to find those. Filter by
+  # market name instead. A game can otherwise return hundreds of prop/period lines, which
+  # is both the size bug above and a useless wall of text in the "Look up odds" picker.
   jq -c --argjson cap "$MAX_ODDS_PER_GAME" '
-    [ (.data // [])[] | (.odds // [])[] | select(.is_main == true) | {sportsbook, market, selection, price, points} ]
-    | .[0:$cap]
+    [ (.data // [])[] | (.odds // [])[]
+      | select(.market as $m | ["Moneyline","Point Spread","Spread","Total Points","Total","Game Total"] | index($m))
+      | {sportsbook, market, selection, price, points}
+    ] | .[0:$cap]
   ' "$TMP/odds_raw.json" > "$TMP/odds.json" 2>/dev/null || echo "[]" > "$TMP/odds.json"
 
   jq -n --slurpfile odds "$TMP/odds.json" --arg label "$label" --arg game "$away @ $home" --arg start "$start" \
