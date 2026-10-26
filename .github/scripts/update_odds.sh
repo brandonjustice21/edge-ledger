@@ -248,20 +248,22 @@ process_player_prop_entry() {
   jq -s '{data: (map(.data // []) | add // [])}' "$TMP/odds_parts.jsonl" > "$TMP/odds_raw.json" 2>/dev/null || echo '{"data":[]}' > "$TMP/odds_raw.json"
 
   kw_pattern=$(market_keywords "$market")
-  # last name only, for matching against the selection text (e.g. "Hurts" in
-  # "Jalen Hurts Over 215.5") — the full "pname" often won't appear verbatim
-  name_kw=$(echo "$pname" | awk '{print $NF}')
 
   raw_odds_count=$(jq -r '[(.data // [])[] | (.odds // [])[]] | length' "$TMP/odds_raw.json" 2>/dev/null || echo 0)
   echo "  [debug] raw odds entries for this fixture (any market, these books): $raw_odds_count" >&2
-  echo "  [debug] 3 sample raw odds objects, full shape, for the \"$market\" market:" >&2
-  jq -c --arg kw "$kw_pattern" '[(.data // [])[] | (.odds // [])[] | select(.market as $m | ($m // "" | test($kw; "i")))] | .[0:3]' "$TMP/odds_raw.json" >&2 2>/dev/null || true
 
-  jq -c --argjson cap "$MAX_ODDS_PER_GAME" --arg kw "$kw_pattern" --arg nm "$name_kw" '
+  # Confirmed by a real sample dump: each odds line carries its own "player_id" field
+  # directly (e.g. player_id:"EA1A329780B4"), so match on that instead of fuzzy name
+  # text — exact, no ambiguity with teammates/opponents. Also: .selection is the BARE
+  # player name ("Tanner McKee") and .name is the full "Player Over/Under Line" string
+  # ("Tanner McKee Over 174.5") — the reverse of what the first pass assumed, so the
+  # display field below now prefers .name and falls back to .selection, not the other
+  # way around.
+  jq -c --argjson cap "$MAX_ODDS_PER_GAME" --arg kw "$kw_pattern" --arg pid "$pid" '
     [ (.data // [])[] | (.odds // [])[]
       | select(.market as $m | ($m // "" | test($kw; "i")))
-      | select((.selection // "") + " " + (.name // "") | test($nm; "i"))
-      | {sportsbook, market, selection: (if (.selection // "") == "" then (.name // "") else .selection end), price, points}
+      | select((.player_id // "") == $pid)
+      | {sportsbook, market, selection: (if (.name // "") == "" then (.selection // "") else .name end), price, points}
     ] | sort_by(.sportsbook) | .[0:$cap]
   ' "$TMP/odds_raw.json" > "$TMP/odds.json" 2>/dev/null || echo "[]" > "$TMP/odds.json"
 
@@ -272,8 +274,8 @@ process_player_prop_entry() {
       jq -n --arg label "$label" --arg pname "$pname" --arg error "Matched $pname's fixture ($fid), but these sharp books have posted no odds for it at all yet — normal well before kickoff. Re-run closer to game time." \
         '{label: $label, error: $error}' >> "$TMP/entries.jsonl"
     else
-      echo "  [debug] $raw_odds_count raw odds lines exist but none matched market \"$market\" (pattern: $kw_pattern) + name \"$name_kw\". Distinct markets containing this player's name:" >&2
-      jq -c --arg nm "$name_kw" '[(.data // [])[] | (.odds // [])[] | select((.selection // "")+" "+(.name // "") | test($nm; "i")) | .market] | unique' "$TMP/odds_raw.json" >&2 2>/dev/null || true
+      echo "  [debug] $raw_odds_count raw odds lines exist but none matched market \"$market\" (pattern: $kw_pattern) + player_id \"$pid\". Distinct markets for this player_id (any market):" >&2
+      jq -c --arg pid "$pid" '[(.data // [])[] | (.odds // [])[] | select((.player_id // "") == $pid) | .market] | unique' "$TMP/odds_raw.json" >&2 2>/dev/null || true
       jq -n --arg label "$label" --arg pname "$pname" --arg market "$market" --arg error "Matched $pname's fixture ($raw_odds_count odds lines total), but none matched market \"$market\" for this player. Check the Action log and adjust market_keywords() in update_odds.sh." \
         '{label: $label, error: $error}' >> "$TMP/entries.jsonl"
     fi
