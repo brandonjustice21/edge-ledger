@@ -215,9 +215,6 @@ process_player_prop_entry() {
 
   raw_odds_count=$(jq -r '[(.data // [])[] | (.odds // [])[]] | length' "$TMP/odds_raw.json" 2>/dev/null || echo 0)
   echo "  [debug] raw odds entries for this player (any market, these books) before filtering: $raw_odds_count" >&2
-  if [ "$raw_odds_count" != "0" ]; then
-    echo "  [debug] distinct market names seen: $(jq -c '[(.data // [])[] | (.odds // [])[] | .market] | unique' "$TMP/odds_raw.json" 2>/dev/null)" >&2
-  fi
 
   jq -c --argjson cap "$MAX_ODDS_PER_GAME" --arg kw "$kw_pattern" '
     [ (.data // [])[] | (.odds // [])[]
@@ -225,6 +222,25 @@ process_player_prop_entry() {
       | {sportsbook, market, selection: (if (.selection // "") == "" then (.name // "") else .selection end), price, points}
     ] | sort_by(.sportsbook) | .[0:$cap]
   ' "$TMP/odds_raw.json" > "$TMP/odds.json" 2>/dev/null || echo "[]" > "$TMP/odds.json"
+
+  matched_count=$(jq -r 'length' "$TMP/odds.json" 2>/dev/null || echo 0)
+
+  if [ "$matched_count" = "0" ]; then
+    if [ "$raw_odds_count" = "0" ]; then
+      # Confirmed by direct test: a live tonight's game has 3000+ odds lines across
+      # dozens of "Player ..." markets at these same books, so an empty raw count here
+      # just means these sharp books haven't posted ANY odds for this specific game yet
+      # — normal well before kickoff, not a bug. Retry closer to game time.
+      jq -n --arg label "$label" --arg pname "$pname" --arg error "Matched $pname, but none of these sharp books have posted any odds for this game yet (0 odds lines returned at all, any market) — books typically open player markets in the day or two before kickoff. Re-run closer to game time." \
+        '{label: $label, error: $error}' >> "$TMP/entries.jsonl"
+    else
+      echo "  [debug] $raw_odds_count raw odds lines exist but none matched market_keywords for \"$market\" (pattern: $kw_pattern). Distinct market names available:" >&2
+      jq -c '[(.data // [])[] | (.odds // [])[] | .market] | unique' "$TMP/odds_raw.json" >&2 2>/dev/null || true
+      jq -n --arg label "$label" --arg pname "$pname" --arg market "$market" --arg error "Matched $pname and found $raw_odds_count odds lines from these books, but none matched the \"$market\" market name. Check the Action log's raw market list and adjust market_keywords() in update_odds.sh for this market." \
+        '{label: $label, error: $error}' >> "$TMP/entries.jsonl"
+    fi
+    return
+  fi
 
   jq -n --slurpfile odds "$TMP/odds.json" --arg label "$label" --arg game "$pname — $market" \
     '{label: $label, game: $game, odds: $odds[0]}' >> "$TMP/entries.jsonl"
