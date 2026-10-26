@@ -1,25 +1,35 @@
 #!/usr/bin/env bash
-# Fetches current odds for each entry in docs/watchlist.json from the OddsJam/OpticOdds
-# API and writes docs/odds-snapshot.json. Requires ODDSJAM_API_KEY in the environment.
+# Tracks every bet in docs/bets.json against the OddsJam/OpticOdds API. Each bet carries
+# its own lifecycle:
+#   wageredOdds   - the price the user actually got; set once by hand, never touched here
+#   openingOdds   - the first price THIS tracker observes after the bet starts tracking;
+#                   set once, on the first successful fetch, and never overwritten again
+#   liveOdds      - the most recent fetch; overwritten every run (this workflow runs every
+#                   10 minutes) while the bet is still upcoming
+#   closingOdds   - locked once the fixture's start time has passed: whatever liveOdds
+#                   held at that point, frozen. No further fetches happen after that.
+# The user sets the bet's outcome (win/loss/push) themselves in the app; this script
+# never touches outcome.
 #
 # All API responses are piped through temp FILES, never shell arguments — a real game's
 # odds response can include hundreds of player-prop lines, and passing that much JSON as
 # a jq --argjson argument overflows the OS command-line length limit ("Argument list too
 # long"). --slurpfile reads from a file instead, so there's no such limit.
 #
-# Two entry shapes in watchlist.json:
-#  - team/game (default, no "type"):  {label, sport, team, sportsbook}
-#  - player prop ("type":"player_prop"): {label, sport, player, market, sharpBooks: [...]}
+# Two bet shapes in bets.json:
+#  - team/game ("type":"team" or omitted): {id, label, sport, team, placedBook}
+#  - player prop ("type":"player_prop"): {id, label, sport, player, market, sharpBooks: [...]}
 #    "market" is the plain-English stat name (e.g. "Assists", "Passing Yards") as produced
-#    by Edge Ledger's prop-shorthand parser; see market_keyword() below for how it's
+#    by Edge Ledger's prop-shorthand parser; see market_keywords() below for how it's
 #    matched against the API's own market-name strings.
 set -euo pipefail
 
 API_BASE="https://api.opticodds.com/api/v3"
-WATCHLIST="docs/watchlist.json"
-OUT="docs/odds-snapshot.json"
+BETS="docs/bets.json"
 MAX_ODDS_PER_GAME=40
 PLAYER_SEARCH_PAGES=50
+NOW_ISO="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+NOW_EPOCH="$(date -u +%s)"
 
 if [ -z "${ODDSJAM_API_KEY:-}" ]; then
   echo "ODDSJAM_API_KEY is not set — add it as a repository secret." >&2
@@ -28,7 +38,7 @@ fi
 
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
-: > "$TMP/entries.jsonl"
+: > "$TMP/bets_out.jsonl"
 
 # sport name (as used in Edge Ledger) -> OpticOdds {sport, league}. Best-effort mapping;
 # adjust here if a sport keeps coming back with no matching games/players.
@@ -48,11 +58,10 @@ map_sport() {
   esac
 }
 
-# plain-English stat label (as Edge Ledger's parser writes it into watchlist.json) ->
-# lowercase substring(s) to look for in the API's own market name. UNVERIFIED against
-# live player-prop data for anything beyond the simple single-stat cases — if a market
-# comes back empty, check the Action log for the actual market names OpticOdds used for
-# that sport and add them here.
+# plain-English stat label (as Edge Ledger's parser writes it into bets.json) -> lowercase
+# substring(s) to look for in the API's own market name. If a market comes back empty,
+# check the Action log for the actual market names OpticOdds used for that sport and add
+# them here.
 market_keywords() {
   case "$1" in
     "Points + Rebounds + Assists") echo "pra|pts+reb+ast|points + rebounds + assists" ;;
@@ -85,96 +94,35 @@ market_keywords() {
   esac
 }
 
-process_team_entry() {
-  local entry="$1" label="$2" sport="$3"
-  local team book op_sport op_league fixtures_url fixture_content fid home away start
-
-  team=$(echo "$entry" | jq -r '.team')
-  book=$(echo "$entry" | jq -r '.sportsbook // "DraftKings"')
+# Resolves a team bet's fixture. Prints "<fixture_id>\t<start_date>" on success, nothing
+# on failure.
+resolve_team_fixture() {
+  local sport="$1" team="$2"
+  local op_sport op_league fixtures_url
   read -r op_sport op_league <<< "$(map_sport "$sport")"
-
   fixtures_url="$API_BASE/fixtures/active?page=1"
   [ "$op_sport" != "-" ] && fixtures_url="$fixtures_url&sport=$op_sport"
   [ "$op_league" != "-" ] && fixtures_url="$fixtures_url&league=$op_league"
-
-  echo "Looking up fixtures for \"$label\" ($fixtures_url)..." >&2
   curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$fixtures_url" > "$TMP/fixtures.json" || echo '{}' > "$TMP/fixtures.json"
-
-  jq -c --arg team "$team" '
-    (.data // [])
-    | map(select(
-        ((.home_team_display // "") | test($team; "i")) or
-        ((.away_team_display // "") | test($team; "i"))
-      ))
-    | .[0] // empty
-  ' "$TMP/fixtures.json" > "$TMP/fixture.json" 2>/dev/null || echo "" > "$TMP/fixture.json"
-
-  fixture_content=$(cat "$TMP/fixture.json")
-
-  if [ -z "$fixture_content" ] || [ "$fixture_content" = "null" ]; then
-    jq -n --arg label "$label" \
-      --arg error "No upcoming game matched \"$team\" for sport \"$sport\". Check spelling, or that watchlist.json's sport matches Edge Ledger's sport names exactly." \
-      '{label: $label, error: $error}' >> "$TMP/entries.jsonl"
-    return
-  fi
-
-  fid=$(jq -r '.id' "$TMP/fixture.json")
-  home=$(jq -r '.home_team_display' "$TMP/fixture.json")
-  away=$(jq -r '.away_team_display' "$TMP/fixture.json")
-  start=$(jq -r '.start_date' "$TMP/fixture.json")
-
-  echo "Matched fixture $fid ($away @ $home). Fetching odds from $book..." >&2
-  curl -sS -G -H "X-Api-Key: $ODDSJAM_API_KEY" \
-    --data-urlencode "fixture_id=$fid" \
-    --data-urlencode "sportsbook=$book" \
-    "$API_BASE/fixtures/odds" > "$TMP/odds_raw.json" || echo '{}' > "$TMP/odds_raw.json"
-
-  # Keep only the core full-game lines, capped. Two filters, both needed:
-  #  - market name, because "is_main" alone marks the primary line *within whatever
-  #    market it's on* (it's just as true for "Correct Score" or "1st Half Correct
-  #    Score" as for "Point Spread") — without this, exotic/period props get in.
-  #  - is_main, because a market like "Point Spread" or "Total Points" also lists every
-  #    alternate line (every point value a book offers) — without this, dozens of
-  #    alternate spreads/totals get in instead of just the real closing line.
-  jq -c --argjson cap "$MAX_ODDS_PER_GAME" '
-    [ (.data // [])[] | (.odds // [])[]
-      | select(.is_main == true)
-      | select(.market as $m | ["Moneyline","Point Spread","Spread","Total Points","Total","Game Total"] | index($m))
-      | {sportsbook, market, selection: (if (.selection // "") == "" then (.name // "") else .selection end), price, points}
-    ] | .[0:$cap]
-  ' "$TMP/odds_raw.json" > "$TMP/odds.json" 2>/dev/null || echo "[]" > "$TMP/odds.json"
-
-  jq -n --slurpfile odds "$TMP/odds.json" --arg label "$label" --arg game "$away @ $home" --arg start "$start" \
-    '{label: $label, game: $game, start: $start, odds: $odds[0]}' >> "$TMP/entries.jsonl"
+  jq -r --arg team "$team" '
+    (.data // []) | map(select(
+      ((.home_team_display // "") | test($team; "i")) or
+      ((.away_team_display // "") | test($team; "i"))
+    )) | .[0] | select(.!=null) | [.id, .start_date] | @tsv
+  ' "$TMP/fixtures.json" 2>/dev/null || true
 }
 
-process_player_prop_entry() {
-  local entry="$1" label="$2" sport="$3"
-  local player market sharp_books op_sport op_league page pid pname found kw_pattern name_kw
-
-  player=$(echo "$entry" | jq -r '.player')
-  market=$(echo "$entry" | jq -r '.market')
-  sharp_books=$(echo "$entry" | jq -c '.sharpBooks // ["DraftKings","FanDuel","Novig","Kalshi","Pinnacle","Circa"]')
+# Resolves a player-prop bet's fixture via their team_id (player_id does NOT
+# cross-reference between /players and /fixtures/odds — see fetch_player_odds). Prints
+# "<fixture_id>\t<start_date>\t<resolved_full_name>" on success, nothing on failure.
+resolve_player_fixture() {
+  local sport="$1" player="$2"
+  local op_sport op_league page pid pname team_id found has_more
   read -r op_sport op_league <<< "$(map_sport "$sport")"
-
-  if [ "$op_league" = "-" ]; then
-    jq -n --arg label "$label" --arg error "Entry's sport \"$sport\" isn't set to a real league — fix \"sport\" in watchlist.json (e.g. NBA, NFL, MLB, NHL)." \
-      '{label: $label, error: $error}' >> "$TMP/entries.jsonl"
-    return
-  fi
-
-  # Confirmed against the live API: /players?league=<id>&page=N works (100 real players
-  # came back for sport=football) — so this is the right call shape. NBA specifically
-  # came back empty across every parameter variant tried (league id, numerical id, name,
-  # sport alone), which is a data-coverage gap for that league on OddsJam's/OpticOdds'
-  # side, not a bug here. If a league keeps coming back with zero despite a real player
-  # name, that's the first thing to suspect — not the request format.
-  echo "Searching $op_league players for \"$player\"..." >&2
-  pid=""; pname=""; team_id=""; total_seen=0
+  [ "$op_league" = "-" ] && return 0
+  pid=""; pname=""; team_id=""
   for page in $(seq 1 "$PLAYER_SEARCH_PAGES"); do
     curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/players?league=$op_league&page=$page" > "$TMP/players.json" || echo '{}' > "$TMP/players.json"
-    page_n=$(jq -r '(.data // []) | length' "$TMP/players.json" 2>/dev/null || echo 0)
-    total_seen=$((total_seen + page_n))
     found=$(jq -c --arg name "$player" '
       (.data // []) | map(select(
         (.name // "" | test($name; "i")) or (.last_name // "" | test($name; "i"))
@@ -189,54 +137,49 @@ process_player_prop_entry() {
     has_more=$(jq -r '.has_more // false' "$TMP/players.json" 2>/dev/null || echo "false")
     [ "$has_more" != "true" ] && break
   done
-
-  if [ -z "$pid" ]; then
-    if [ "$total_seen" = "0" ]; then
-      jq -n --arg label "$label" --arg error "OddsJam returned zero players for league \"$op_league\" — this looks like a data-coverage gap for that league on their end (not a bad request), not a spelling issue. Confirm with OddsJam/OpticOdds support whether player data is available for this league." \
-        '{label: $label, error: $error}' >> "$TMP/entries.jsonl"
-    else
-      jq -n --arg label "$label" --arg error "No $op_league player matched \"$player\" across $total_seen players checked. Check spelling." \
-        '{label: $label, error: $error}' >> "$TMP/entries.jsonl"
-    fi
-    return
+  if [ -z "$pid" ] || [ -z "$team_id" ]; then
+    return 0
   fi
-
-  if [ -z "$team_id" ]; then
-    jq -n --arg label "$label" --arg pname "$pname" --arg error "Matched $pname but the API didn't return a team for them, so their fixture can't be looked up." \
-      '{label: $label, error: $error}' >> "$TMP/entries.jsonl"
-    return
-  fi
-
-  # Confirmed by direct test: /fixtures/odds?player_id=X returns ZERO odds even for a
-  # player whose game has 3000+ real odds lines (including dozens of "Player ..."
-  # markets) when the SAME fixture is queried by fixture_id instead — so player_id
-  # filtering on this endpoint doesn't work as documented. Use team_id to find their
-  # fixture (the same proven-working lookup as the team/game path), then filter the
-  # full fixture odds by market name AND the player's own name in the selection text.
-  echo "Matched player $pid ($pname, team $team_id). Finding their fixture..." >&2
   curl -sS -H "X-Api-Key: $ODDSJAM_API_KEY" "$API_BASE/fixtures/active?team_id=$team_id&page=1" > "$TMP/pfixtures.json" || echo '{}' > "$TMP/pfixtures.json"
-  fid=$(jq -r '(.data // [])[0].id // empty' "$TMP/pfixtures.json" 2>/dev/null)
+  jq -r --arg pname "$pname" '
+    (.data // [])[0] | select(.!=null) | [.id, .start_date, $pname] | @tsv
+  ' "$TMP/pfixtures.json" 2>/dev/null || true
+}
 
-  if [ -z "$fid" ]; then
-    jq -n --arg label "$label" --arg pname "$pname" --arg error "Matched $pname but found no upcoming fixture for their team (team_id $team_id)." \
-      '{label: $label, error: $error}' >> "$TMP/entries.jsonl"
-    return
-  fi
+# Fetches the core full-game lines (Moneyline/Spread/Total) for one book, writes the
+# result (an array, possibly empty) to $TMP/odds.json.
+fetch_team_odds() {
+  local fid="$1" book="$2"
+  curl -sS -G -H "X-Api-Key: $ODDSJAM_API_KEY" \
+    --data-urlencode "fixture_id=$fid" \
+    --data-urlencode "sportsbook=$book" \
+    "$API_BASE/fixtures/odds" > "$TMP/odds_raw.json" || echo '{}' > "$TMP/odds_raw.json"
+  # Two filters, both needed: market name, because "is_main" alone marks the primary
+  # line *within whatever market it's on* (true for exotic/period props too); is_main,
+  # because a core market also lists every alternate line.
+  jq -c --argjson cap "$MAX_ODDS_PER_GAME" '
+    [ (.data // [])[] | (.odds // [])[]
+      | select(.is_main == true)
+      | select(.market as $m | ["Moneyline","Point Spread","Spread","Total Points","Total","Game Total"] | index($m))
+      | {sportsbook, market, selection: (if (.selection // "") == "" then (.name // "") else .selection end), price, points}
+    ] | .[0:$cap]
+  ' "$TMP/odds_raw.json" > "$TMP/odds.json" 2>/dev/null || echo "[]" > "$TMP/odds.json"
+}
 
-  echo "Found fixture $fid. Fetching \"$market\" odds from sharp books..." >&2
-  # Confirmed by direct test: this endpoint hard-caps at 5 sportsbooks per request
-  # ({"error":"maximum 5 sportsbooks allowed"}) — that's exactly why every player-prop
-  # lookup came back with 0 raw odds despite real data existing: our 6-book sharp list
-  # (DraftKings/FanDuel/Novig/Kalshi/Pinnacle/Circa) silently failed the whole request.
-  # Batch into chunks of <=5 and merge, so a 6th (or 10th) book never drops the others.
-  local -a all_books=() chunk=()
+# Fetches a player prop's odds across up to several sharp books, writes the result (an
+# array, possibly empty) to $TMP/odds.json.
+fetch_player_odds() {
+  local fid="$1" market="$2" pname="$3" sharp_books="$4"
+  local -a all_books=() chunk=() sb_args=()
   while IFS= read -r sb; do all_books+=("$sb"); done < <(echo "$sharp_books" | jq -r '.[]')
 
+  # Confirmed by direct test: this endpoint hard-caps at 5 sportsbooks per request.
+  # Batch into chunks of <=5 and merge, so a 6th (or later) book never drops the others.
   : > "$TMP/odds_parts.jsonl"
   local i=0
   while [ "$i" -lt "${#all_books[@]}" ]; do
     chunk=("${all_books[@]:$i:5}")
-    local -a sb_args=()
+    sb_args=()
     for sb in "${chunk[@]}"; do sb_args+=(--data-urlencode "sportsbook=$sb"); done
     curl -sS -G -H "X-Api-Key: $ODDSJAM_API_KEY" \
       --data-urlencode "fixture_id=$fid" \
@@ -247,19 +190,12 @@ process_player_prop_entry() {
   done
   jq -s '{data: (map(.data // []) | add // [])}' "$TMP/odds_parts.jsonl" > "$TMP/odds_raw.json" 2>/dev/null || echo '{"data":[]}' > "$TMP/odds_raw.json"
 
+  local kw_pattern name_kw
   kw_pattern=$(market_keywords "$market")
-
-  raw_odds_count=$(jq -r '[(.data // [])[] | (.odds // [])[]] | length' "$TMP/odds_raw.json" 2>/dev/null || echo 0)
-  echo "  [debug] raw odds entries for this fixture (any market, these books): $raw_odds_count" >&2
-
-  # player_id does NOT cross-reference between /players and /fixtures/odds — confirmed
-  # directly: Jalen Hurts' /players id matched zero markets in his own game's 7000+
-  # odds lines, while his teammate/opponent's names were clearly present in that same
-  # data. Back to name matching, but now with the field roles right: a real sample dump
-  # showed .selection is the BARE player name ("Tanner McKee") and .name is the full
-  # "Player Over/Under Line" string ("Tanner McKee Over 174.5") — opposite of the first
-  # guess. Match the player's last name against .selection specifically (not .name,
-  # which would also match on every OTHER word in the sentence) to avoid false hits.
+  # .selection is the BARE player name ("Tanner McKee"); .name is the full "Player
+  # Over/Under Line" string. Match the player's last name against .selection
+  # specifically (not .name, which would also match on every other word) to avoid
+  # false hits.
   name_kw=$(echo "$pname" | awk '{print $NF}')
   jq -c --argjson cap "$MAX_ODDS_PER_GAME" --arg kw "$kw_pattern" --arg nm "$name_kw" '
     [ (.data // [])[] | (.odds // [])[]
@@ -268,42 +204,93 @@ process_player_prop_entry() {
       | {sportsbook, market, selection: (if (.name // "") == "" then (.selection // "") else .name end), price, points}
     ] | sort_by(.sportsbook) | .[0:$cap]
   ' "$TMP/odds_raw.json" > "$TMP/odds.json" 2>/dev/null || echo "[]" > "$TMP/odds.json"
-
-  matched_count=$(jq -r 'length' "$TMP/odds.json" 2>/dev/null || echo 0)
-
-  if [ "$matched_count" = "0" ]; then
-    if [ "$raw_odds_count" = "0" ]; then
-      jq -n --arg label "$label" --arg pname "$pname" --arg error "Matched $pname's fixture ($fid), but these sharp books have posted no odds for it at all yet — normal well before kickoff. Re-run closer to game time." \
-        '{label: $label, error: $error}' >> "$TMP/entries.jsonl"
-    else
-      echo "  [debug] $raw_odds_count raw odds lines exist but none matched market \"$market\" (pattern: $kw_pattern) + selection containing \"$name_kw\". Distinct selections containing this name (any market):" >&2
-      jq -c --arg nm "$name_kw" '[(.data // [])[] | (.odds // [])[] | select((.selection // "") | test($nm; "i")) | .selection] | unique' "$TMP/odds_raw.json" >&2 2>/dev/null || true
-      jq -n --arg label "$label" --arg pname "$pname" --arg market "$market" --arg error "Matched $pname's fixture ($raw_odds_count odds lines total), but none matched market \"$market\" for this player. They may not have a posted line for this stat yet, or check the Action log and adjust market_keywords()." \
-        '{label: $label, error: $error}' >> "$TMP/entries.jsonl"
-    fi
-    return
-  fi
-
-  jq -n --slurpfile odds "$TMP/odds.json" --arg label "$label" --arg game "$pname — $market" \
-    '{label: $label, game: $game, odds: $odds[0]}' >> "$TMP/entries.jsonl"
 }
 
-count=$(jq 'length' "$WATCHLIST")
+count=$(jq '.bets | length' "$BETS")
 
 for i in $(seq 0 $((count - 1))); do
-  entry=$(jq -c ".[$i]" "$WATCHLIST")
-  label=$(echo "$entry" | jq -r '.label')
-  sport=$(echo "$entry" | jq -r '.sport')
-  etype=$(echo "$entry" | jq -r '.type // "team"')
+  bet=$(jq -c ".bets[$i]" "$BETS")
+  id=$(echo "$bet" | jq -r '.id')
+  label=$(echo "$bet" | jq -r '.label')
+  sport=$(echo "$bet" | jq -r '.sport')
+  etype=$(echo "$bet" | jq -r '.type // "team"')
+  status=$(echo "$bet" | jq -r '.status // "tracking"')
+
+  if [ "$status" = "closed" ]; then
+    echo "  [skip] \"$label\" already closed." >&2
+    echo "$bet" >> "$TMP/bets_out.jsonl"
+    continue
+  fi
+
+  fid=""; start=""; pname=""
+  if [ "$etype" = "player_prop" ]; then
+    player=$(echo "$bet" | jq -r '.player')
+    echo "Resolving fixture for \"$label\" (player: $player)..." >&2
+    line="$(resolve_player_fixture "$sport" "$player")"
+    if [ -n "$line" ]; then
+      fid=$(echo "$line" | cut -f1); start=$(echo "$line" | cut -f2); pname=$(echo "$line" | cut -f3)
+    fi
+  else
+    team=$(echo "$bet" | jq -r '.team')
+    echo "Resolving fixture for \"$label\" (team: $team)..." >&2
+    line="$(resolve_team_fixture "$sport" "$team")"
+    if [ -n "$line" ]; then
+      fid=$(echo "$line" | cut -f1); start=$(echo "$line" | cut -f2)
+    fi
+  fi
+
+  if [ -z "$fid" ]; then
+    echo "  [debug] no fixture/player match yet for \"$label\"." >&2
+    echo "$bet" | jq -c --arg err "No upcoming fixture matched yet — check the sport/team/player spelling, or it may just be too early." '.lastError = $err' >> "$TMP/bets_out.jsonl"
+    continue
+  fi
+
+  start_epoch=$(date -u -d "$start" +%s 2>/dev/null || echo 0)
+
+  if [ "$start_epoch" -gt 0 ] && [ "$NOW_EPOCH" -ge "$start_epoch" ]; then
+    echo "  [close] \"$label\" fixture started at $start — locking closing line." >&2
+    echo "$bet" | jq -c --arg ts "$NOW_ISO" --arg start "$start" '
+      .status = "closed"
+      | .fixtureStart = $start
+      | .closingOdds = (.closingOdds // .liveOdds)
+      | .closingCapturedAt = (.closingCapturedAt // .liveCapturedAt // $ts)
+      | .lastError = (if .liveOdds == null then "Game started before any odds were captured." else null end)
+    ' >> "$TMP/bets_out.jsonl"
+    continue
+  fi
 
   if [ "$etype" = "player_prop" ]; then
-    process_player_prop_entry "$entry" "$label" "$sport"
+    market=$(echo "$bet" | jq -r '.market')
+    sharp_books=$(echo "$bet" | jq -c '.sharpBooks // ["DraftKings","FanDuel","Novig","Kalshi","Pinnacle","Circa Sports"]')
+    fetch_player_odds "$fid" "$market" "$pname" "$sharp_books"
   else
-    process_team_entry "$entry" "$label" "$sport"
+    book=$(echo "$bet" | jq -r '.placedBook // "DraftKings"')
+    fetch_team_odds "$fid" "$book"
   fi
+
+  matched=$(jq -r 'length' "$TMP/odds.json" 2>/dev/null || echo 0)
+
+  if [ "$matched" = "0" ]; then
+    echo "  [debug] fixture $fid matched for \"$label\" but no odds yet." >&2
+    echo "$bet" | jq -c --arg start "$start" --arg err "Matched the fixture, but no odds posted for this yet — normal well before kickoff." '
+      .fixtureStart = $start | .lastError = $err
+    ' >> "$TMP/bets_out.jsonl"
+    continue
+  fi
+
+  echo "  [ok] \"$label\" — $matched odds line(s) captured." >&2
+  jq -n --slurpfile odds "$TMP/odds.json" --argjson bet "$bet" --arg ts "$NOW_ISO" --arg start "$start" '
+    $bet
+    | .fixtureStart = $start
+    | .liveOdds = $odds[0]
+    | .liveCapturedAt = $ts
+    | .openingOdds = (.openingOdds // $odds[0])
+    | .openingCapturedAt = (.openingCapturedAt // $ts)
+    | .lastError = null
+  ' >> "$TMP/bets_out.jsonl"
 done
 
-jq -s --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{generatedAt: $ts, entries: .}' "$TMP/entries.jsonl" > "$OUT"
+jq -s --arg ts "$NOW_ISO" '{updatedAt: $ts, bets: .}' "$TMP/bets_out.jsonl" > "$BETS"
 
-echo "Wrote $OUT" >&2
-wc -c "$OUT" >&2
+echo "Updated $BETS" >&2
+wc -c "$BETS" >&2
