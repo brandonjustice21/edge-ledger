@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-26T17:50:58Z",
+  "generatedAt": "2026-10-26T17:52:25Z",
   "entries": [
     {
       "label": "Example: Chiefs game",
@@ -8,255 +8,31 @@
       "odds": [
         {
           "sportsbook": "DraftKings",
-          "market": "Point Spread",
+          "market": "Moneyline",
           "selection": "Denver Broncos",
-          "price": -253,
-          "points": 6.5
+          "price": 105,
+          "points": null
         },
         {
           "sportsbook": "DraftKings",
           "market": "Total Points",
           "selection": "",
-          "price": -10000,
-          "points": 64.5
+          "price": -105,
+          "points": 41.5
         },
         {
           "sportsbook": "DraftKings",
-          "market": "Total Points",
-          "selection": "",
-          "price": 1300,
-          "points": 64.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Total Points",
-          "selection": "",
-          "price": -2700,
-          "points": 24.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Total Points",
-          "selection": "",
-          "price": -185,
-          "points": 37.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Total Points",
-          "selection": "",
-          "price": 283,
-          "points": 32.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Point Spread",
+          "market": "Moneyline",
           "selection": "Kansas City Chiefs",
-          "price": -165,
-          "points": 2.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Point Spread",
-          "selection": "Kansas City Chiefs",
-          "price": -2600,
-          "points": 17.5
+          "price": -125,
+          "points": null
         },
         {
           "sportsbook": "DraftKings",
           "market": "Total Points",
           "selection": "",
-          "price": -298,
-          "points": 34.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Point Spread",
-          "selection": "Kansas City Chiefs",
-          "price": 780,
-          "points": -19.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Total Points",
-          "selection": "",
-          "price": 137,
-          "points": 37.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Point Spread",
-          "selection": "Kansas City Chiefs",
-          "price": 1280,
-          "points": -24.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Total Points",
-          "selection": "",
-          "price": -258,
-          "points": 35.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Total Points",
-          "selection": "",
-          "price": 409,
-          "points": 53.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Point Spread",
-          "selection": "Denver Broncos",
-          "price": -710,
-          "points": 13.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Total Points",
-          "selection": "",
-          "price": -6900,
-          "points": 62.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Point Spread",
-          "selection": "Denver Broncos",
-          "price": 1220,
-          "points": -21.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Total Points",
-          "selection": "",
-          "price": 544,
-          "points": 27.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Total Points",
-          "selection": "",
-          "price": 235,
-          "points": 33.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Point Spread",
-          "selection": "Kansas City Chiefs",
-          "price": -149,
-          "points": 1.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Point Spread",
-          "selection": "Denver Broncos",
-          "price": -376,
-          "points": 8.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Point Spread",
-          "selection": "Denver Broncos",
-          "price": 730,
-          "points": -16.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Point Spread",
-          "selection": "Denver Broncos",
-          "price": 349,
-          "points": -9.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Point Spread",
-          "selection": "Kansas City Chiefs",
-          "price": -1320,
-          "points": 14.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Point Spread",
-          "selection": "Denver Broncos",
-          "price": -199,
-          "points": 4.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Total Points",
-          "selection": "",
-          "price": 186,
-          "points": 35.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Total Points",
-          "selection": "",
-          "price": -489,
-          "points": 31.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Point Spread",
-          "selection": "Kansas City Chiefs",
-          "price": 487,
-          "points": -14.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Total Points",
-          "selection": "",
-          "price": -519,
-          "points": 51.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Total Points",
-          "selection": "",
-          "price": 496,
-          "points": 28.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Point Spread",
-          "selection": "Kansas City Chiefs",
-          "price": 575,
-          "points": -16.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Total Points",
-          "selection": "",
-          "price": -234,
-          "points": 46.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Point Spread",
-          "selection": "Kansas City Chiefs",
-          "price": 229,
-          "points": -7.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Point Spread",
-          "selection": "Denver Broncos",
-          "price": -556,
-          "points": 11.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Point Spread",
-          "selection": "Kansas City Chiefs",
-          "price": -441,
-          "points": 7.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Point Spread",
-          "selection": "Denver Broncos",
-          "price": -175,
-          "points": 3.5
+          "price": -115,
+          "points": 41.5
         },
         {
           "sportsbook": "DraftKings",
@@ -267,24 +43,10 @@
         },
         {
           "sportsbook": "DraftKings",
-          "market": "Total Points",
-          "selection": "",
-          "price": -209,
-          "points": 45.5
-        },
-        {
-          "sportsbook": "DraftKings",
           "market": "Point Spread",
           "selection": "Kansas City Chiefs",
-          "price": -1560,
-          "points": 15.5
-        },
-        {
-          "sportsbook": "DraftKings",
-          "market": "Total Points",
-          "selection": "",
-          "price": 170,
-          "points": 46.5
+          "price": -110,
+          "points": -1.5
         }
       ]
     }
