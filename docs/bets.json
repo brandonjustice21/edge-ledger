@@ -1,45 +1,4 @@
 {
-  "updatedAt": "2026-10-27T16:02:18Z",
-  "bets": [
-    {
-      "status": "tracking",
-      "openingOdds": null,
-      "liveOdds": null,
-      "closingOdds": null,
-      "id": "diag-test-1793115376642",
-      "label": "DIAGNOSTIC TEST - safe to delete",
-      "type": "player_prop",
-      "sport": "NFL",
-      "player": "Test",
-      "market": "Passing Yards",
-      "side": "Over",
-      "line": "0.5",
-      "placedBook": "DraftKings",
-      "wageredOdds": -110,
-      "sharpBooks": [
-        "DraftKings"
-      ],
-      "lastError": "No upcoming fixture matched yet — check the sport/team/player spelling, or it may just be too early."
-    },
-    {
-      "status": "tracking",
-      "openingOdds": null,
-      "liveOdds": null,
-      "closingOdds": null,
-      "id": "diag-test-1793115385603",
-      "label": "DIAGNOSTIC TEST - safe to delete",
-      "type": "player_prop",
-      "sport": "NFL",
-      "player": "Test",
-      "market": "Passing Yards",
-      "side": "Over",
-      "line": "0.5",
-      "placedBook": "DraftKings",
-      "wageredOdds": -110,
-      "sharpBooks": [
-        "DraftKings"
-      ],
-      "lastError": "No upcoming fixture matched yet — check the sport/team/player spelling, or it may just be too early."
-    }
-  ]
+  "updatedAt": null,
+  "bets": []
 }
