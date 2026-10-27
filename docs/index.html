@@ -487,6 +487,7 @@ footer{margin-top:40px; padding-top:16px; border-top:1px solid var(--border); fo
   </div>
   <div class="drawer-foot">
     <button class="btn danger" id="btnDelete" style="display:none; margin-right:auto;">Delete</button>
+    <button class="btn ghost" id="btnRetryTrack" style="display:none;">Retry tracking</button>
     <button class="btn ghost" id="btnCancel">Cancel</button>
     <button class="btn primary" id="btnSave">Save bet</button>
   </div>
@@ -850,6 +851,20 @@ function badgeHtml(status){
   var labels = {pending:"Pending", won:"Won", lost:"Lost", push:"Push", void:"Void", cashout:"Cashed Out"};
   return '<span class="badge '+status+'">'+(labels[status]||status)+'</span>';
 }
+// Shows the bet's confirmed tracking state — never shown until registerTracking's
+// response actually confirms it, so this never implies a sync that didn't happen.
+function trackTagHtml(b){
+  if(b.trackStatus==="error"){
+    return '<span class="example-tag" style="color:var(--bad); border-color:var(--bad-soft);" title="'+(b.trackError||"Tracking failed")+'">tracking failed</span>';
+  }
+  if(b.trackStatus==="pending"){
+    return '<span class="example-tag">registering…</span>';
+  }
+  if(b.tracked){
+    return '<span class="example-tag" title="'+(b.trackError||"")+'">'+(b.trackStatus==="closed"?"closed":"tracking")+'</span>';
+  }
+  return "";
+}
 
 function renderLedger(bets){
   var sorted = bets.slice().sort(function(a,b){ return new Date(b.datePlaced)-new Date(a.datePlaced); });
@@ -868,7 +883,7 @@ function renderLedger(bets){
       '<td class="mono" style="color:var(--fg-faint); font-size:11.5px;">'+dateStr+'</td>'+
       '<td>'+b.sport+'</td>'+
       '<td>'+b.type+'</td>'+
-      '<td style="max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="'+(b.selection||"")+'">'+(b.selection||"—")+(b.example?'<span class="example-tag">ex</span>':'')+(b.tracked?'<span class="example-tag" title="'+(b.trackError||"")+'">'+(b.trackStatus==="closed"?"closed":"tracking")+'</span>':'')+'</td>'+
+      '<td style="max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="'+(b.selection||"")+'">'+(b.selection||"—")+(b.example?'<span class="example-tag">ex</span>':'')+trackTagHtml(b)+'</td>'+
       '<td class="num">'+fmtMoney(Number(b.stake))+'</td>'+
       '<td class="num">'+fmtOdds(b.oddsTaken)+'</td>'+
       '<td class="num '+plClass(b.clv)+'">'+(b.provisional?"~":"")+fmtPct(b.clv)+'</td>'+
@@ -889,7 +904,7 @@ function renderLedger(bets){
       '<div class="lcard-del" data-del="'+b.id+'">Delete</div>'+
       '<div class="lcard-face" data-edit="'+b.id+'">'+
         '<div class="lcard-top"><span class="lcard-meta">'+b.sport+' · '+b.type+'</span>'+badgeHtml(b.status)+'</div>'+
-        '<div class="lcard-sel">'+(b.selection||"—")+(b.example?'<span class="example-tag">ex</span>':'')+(b.tracked?'<span class="example-tag">'+(b.trackStatus==="closed"?"closed":"tracking")+'</span>':'')+'</div>'+
+        '<div class="lcard-sel">'+(b.selection||"—")+(b.example?'<span class="example-tag">ex</span>':'')+trackTagHtml(b)+'</div>'+
         '<div class="lcard-stats">'+
           '<div><span>Stake</span><b>'+fmtMoney(Number(b.stake))+'</b></div>'+
           '<div><span>CLV</span><b class="'+plClass(b.clv)+'">'+(b.provisional?"~":"")+fmtPct(b.clv)+'</b></div>'+
@@ -997,6 +1012,7 @@ function openDrawer(id){
   document.getElementById("fieldPayout").value = bet && bet.payout!=null ? bet.payout : "";
   document.getElementById("fieldNotes").value = bet ? bet.notes||"" : "";
   document.getElementById("btnDelete").style.display = bet ? "inline-flex" : "none";
+  document.getElementById("btnRetryTrack").style.display = (bet && bet.trackStatus==="error" && bet.trackProp) ? "inline-flex" : "none";
   togglePayoutField();
   updateLiveCalc();
   document.getElementById("overlay").classList.add("show");
@@ -1404,8 +1420,15 @@ function saveBetFromForm(){
     payout: document.getElementById("fieldPayout").value!=="" ? Number(document.getElementById("fieldPayout").value) : null,
     notes: document.getElementById("fieldNotes").value.trim(),
     example: false,
-    tracked: existing ? !!existing.tracked : (!editingId && !!pendingTrackId),
-    trackStatus: existing ? existing.trackStatus : null,
+    // tracked/trackStatus start false/"pending" even when a track attempt is about to
+    // fire — they only flip to a confirmed state once registerTracking's response comes
+    // back. Showing "tracking" optimistically (before GitHub actually confirmed the
+    // write) previously masked real failures: the bet looked tracked in the ledger but
+    // nothing was ever written, so it silently never got a closing line.
+    tracked: existing ? !!existing.tracked : false,
+    trackStatus: existing ? existing.trackStatus : (trackProp ? "pending" : null),
+    trackError: existing ? existing.trackError : null,
+    trackProp: existing ? existing.trackProp : (trackProp || null),
     liveOdds: existing ? existing.liveOdds : null
   };
   if(editingId){
@@ -1421,13 +1444,24 @@ function saveBetFromForm(){
   renderAll();
   if(trackProp){
     toast("Bet logged — registering for live tracking…");
-    registerTracking(bet, trackProp);
+    registerTracking(bet.id, trackProp);
   } else {
     toast(editingId ? "Bet updated." : "Bet logged.");
   }
 }
-function registerTracking(bet, prop){
+function registerTracking(betId, prop){
+  var bet = state.bets.find(function(b){return b.id===betId;});
+  if(!bet) return;
   var payload = trackedBetObject(prop, bet.sport, bet.book, bet.oddsTaken, bet.id);
+  function applyResult(ok, errMsg){
+    var idx = state.bets.findIndex(function(b){return b.id===betId;});
+    if(idx===-1) return; // bet was deleted in the meantime
+    state.bets[idx].tracked = ok;
+    state.bets[idx].trackStatus = ok ? "tracking" : "error";
+    state.bets[idx].trackError = ok ? null : (errMsg || "Tracking registration failed.");
+    saveBets(state.bets);
+    renderAll();
+  }
   fetch("/api/track", {
     method: "POST",
     headers: {"Content-Type":"application/json"},
@@ -1436,13 +1470,16 @@ function registerTracking(bet, prop){
     .then(function(r){ return r.json().then(function(data){ return {ok:r.ok, data:data}; }); })
     .then(function(res){
       if(res.ok && res.data && res.data.ok){
+        applyResult(true, null);
         toast("Now tracking "+bet.selection+" — opening/live/closing prices will sync in automatically.");
       } else {
-        toast("Bet logged, but tracking setup failed: "+((res.data&&res.data.error)||"unknown error"));
+        applyResult(false, (res.data && res.data.error) || "unknown error");
+        toast("Tracking failed for "+bet.selection+" — see the warning on its ledger row.");
       }
     })
     .catch(function(){
-      toast("Bet logged, but couldn't reach the tracking service.");
+      applyResult(false, "Couldn't reach the tracking service.");
+      toast("Tracking failed for "+bet.selection+" — see the warning on its ledger row.");
     });
 }
 
@@ -1591,6 +1628,17 @@ document.getElementById("btnDrawerClose").addEventListener("click", closeDrawer)
 document.getElementById("btnCancel").addEventListener("click", closeDrawer);
 document.getElementById("overlay").addEventListener("click", closeDrawer);
 document.getElementById("btnSave").addEventListener("click", saveBetFromForm);
+document.getElementById("btnRetryTrack").addEventListener("click", function(){
+  var id = editingId;
+  var bet = id ? state.bets.find(function(b){return b.id===id;}) : null;
+  if(!bet || !bet.trackProp) return;
+  bet.trackStatus = "pending";
+  saveBets(state.bets);
+  closeDrawer();
+  renderAll();
+  toast("Retrying tracking registration…");
+  registerTracking(bet.id, bet.trackProp);
+});
 document.getElementById("btnDelete").addEventListener("click", function(){
   var id = editingId;
   confirmAction("Delete this bet?", "This can't be undone.", function(){
