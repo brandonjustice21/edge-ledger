@@ -19,6 +19,25 @@
       "sharpBooks": [
         "DraftKings"
       ]
+    },
+    {
+      "status": "tracking",
+      "openingOdds": null,
+      "liveOdds": null,
+      "closingOdds": null,
+      "id": "diag-test-1793115385603",
+      "label": "DIAGNOSTIC TEST - safe to delete",
+      "type": "player_prop",
+      "sport": "NFL",
+      "player": "Test",
+      "market": "Passing Yards",
+      "side": "Over",
+      "line": "0.5",
+      "placedBook": "DraftKings",
+      "wageredOdds": -110,
+      "sharpBooks": [
+        "DraftKings"
+      ]
     }
   ]
 }
