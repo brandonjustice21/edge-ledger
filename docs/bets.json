@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-27T10:44:41Z",
+  "updatedAt": "2026-10-27T16:02:18Z",
   "bets": [
     {
       "status": "tracking",
@@ -18,7 +18,8 @@
       "wageredOdds": -110,
       "sharpBooks": [
         "DraftKings"
-      ]
+      ],
+      "lastError": "No upcoming fixture matched yet — check the sport/team/player spelling, or it may just be too early."
     },
     {
       "status": "tracking",
@@ -37,7 +38,8 @@
       "wageredOdds": -110,
       "sharpBooks": [
         "DraftKings"
-      ]
+      ],
+      "lastError": "No upcoming fixture matched yet — check the sport/team/player spelling, or it may just be too early."
     }
   ]
 }
